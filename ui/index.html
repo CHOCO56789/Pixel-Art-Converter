@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pixel Art Converter UI</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <div class="titlebar">
+        <div class="title">Pixel Art Converter</div>
+        <div class="title-actions">
+          <button id="openFileBtn" class="ghost">画像を開く</button>
+          <button id="exportToggle" class="ghost">書き出し</button>
+          <div id="exportPopover" class="popover hidden">
+            <div class="popover-title">書き出し設定</div>
+            <label>倍率 <input type="number" id="exportScale" min="1" max="64" step="1" value="1" class="num"></label>
+            <button id="downloadBtn" class="primary full">PNGを書き出し</button>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" class="visually-hidden" />
+        </div>
+      </div>
+
+      <div class="main">
+        <aside class="sidebar">
+          <div class="tool-group paint-only">
+            <div class="tool-title">ツール</div>
+            <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
+            <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
+            <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
+            <button class="tool-btn" data-tool="line" title="直線">📏</button>
+            <button class="tool-btn" data-tool="rect" title="矩形">▭</button>
+            <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
+            <button class="tool-btn" data-tool="move" title="移動">✋</button>
+          </div>
+
+          <div class="tool-group paint-only">
+            <div class="tool-title">編集</div>
+            <button type="button" id="undoBtn" title="Undo">↶</button>
+            <button type="button" id="redoBtn" title="Redo">↷</button>
+            <button type="button" id="clearPaintBtn" title="レイヤークリア">✕</button>
+          </div>
+
+          <div class="tool-group paint-only">
+            <div class="tool-title">カラー</div>
+            <input type="color" id="color" value="#ff4d4d"/>
+            <label class="mini">不透明度 <input type="range" id="alpha" min="0" max="255" value="255"></label>
+          </div>
+
+          <div class="tool-group paint-only">
+            <div class="tool-title">ブラシ</div>
+            <label class="mini">形状
+              <select id="brushShape">
+                <option value="square" selected>四角</option>
+                <option value="circle">丸</option>
+              </select>
+            </label>
+            <label class="mini">サイズ <input type="number" id="brushSize" min="1" max="16" value="1" class="num"></label>
+            <!-- 保持のための隠しセレクト -->
+            <select id="tool" class="visually-hidden">
+              <option value="pen" selected>ペン</option>
+              <option value="eraser">消しゴム</option>
+              <option value="picker">スポイト</option>
+              <option value="line">直線</option>
+              <option value="rect">矩形</option>
+              <option value="fill">塗りつぶし</option>
+              <option value="move">移動</option>
+            </select>
+          </div>
+        </aside>
+
+        <section class="workspace">
+          <div class="topbar">
+            <div class="mode-steps">
+              <div class="step" data-step="convert">1 変換</div>
+              <div class="arrow">→</div>
+              <div class="step" data-step="edit">2 編集</div>
+              <div class="spacer"></div>
+              <button id="backToConvertBtn" class="ghost hidden">変換に戻る</button>
+              <button id="finalizeBtn" class="primary">編集に進む</button>
+            </div>
+
+            <div class="group normalize-only">
+              <div class="group-title">変換方法</div>
+              <div class="row">
+                <label>色の決め方
+                  <select id="method">
+                    <option value="mode">最頻色（ブロック内で最も多い色）</option>
+                    <option value="center" selected>中心（ブロック中心の色）</option>
+                    <option value="average">平均（ブロック平均色）</option>
+                  </select>
+                </label>
+                <label>サンプリング密度 <input type="range" id="quality" min="1" max="8" value="3"> <span id="qualityLabel">3</span></label>
+              </div>
+            </div>
+
+            <div class="group normalize-only">
+              <div class="group-title">グリッド設定（出力サイズ）</div>
+              <div class="row">
+                <label>横（W）<input type="number" id="gridW" min="1" max="256" value="32" class="num"></label>
+                <label>縦（H）<input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
+                <label><input type="checkbox" id="gridLockAspect" checked> 比率を固定</label>
+                <label>比率（W:H）<input type="text" id="gridAspect" value="1:1" class="num" placeholder="1:1"></label>
+              </div>
+            </div>
+
+            <div class="group normalize-only">
+              <div class="group-title">拡大縮小</div>
+              <div class="row">
+                <label>横倍率
+                  <input type="range" id="scaleX" min="0.1" max="8" step="0.01" value="1">
+                  <input type="number" id="scaleXNum" min="0.1" max="8" step="0.01" value="1" class="num">
+                </label>
+                <label>縦倍率
+                  <input type="range" id="scaleY" min="0.1" max="8" step="0.01" value="1">
+                  <input type="number" id="scaleYNum" min="0.1" max="8" step="0.01" value="1" class="num">
+                </label>
+                <label><input type="checkbox" id="lockAspect" checked> 縦横比を固定</label>
+              </div>
+            </div>
+
+            <div class="group normalize-only">
+              <div class="group-title">位置調整</div>
+              <div class="row">
+                <label>オフセットX
+                  <input type="range" id="offsetXRange" min="0" max="0" step="1" value="0">
+                  <input type="number" id="offsetX" value="0" class="num">
+                </label>
+                <label>オフセットY
+                  <input type="range" id="offsetYRange" min="0" max="0" step="1" value="0">
+                  <input type="number" id="offsetY" value="0" class="num">
+                </label>
+                <div class="hint">プレビュー上をドラッグしても位置を動かせます</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvas-area">
+            <div class="canvas-wrap" id="previewWrap">
+              <div class="panel-header">元画像（ビュー）＋グリッド</div>
+              <div class="canvas-surface checker"><canvas id="previewCanvas" width="512" height="512"></canvas></div>
+            </div>
+            <div class="canvas-wrap" id="outputWrap">
+              <div class="panel-header">ピクセル編集</div>
+              <div class="canvas-surface checker"><canvas id="outputCanvas" width="32" height="32" class="pixelated"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panels">
+          <div class="panel paint-controls">
+            <div class="panel-header"><span>レイヤー</span></div>
+            <div class="panel-body">
+              <div class="row hidden"><select id="layerSelect" class="full"></select></div>
+              <div id="layerList" class="layer-list"></div>
+              <div class="row gap">
+                <button type="button" id="addLayerBtn">追加</button>
+                <button type="button" id="removeLayerBtn">削除</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel paint-controls" data-collapsible="true">
+            <div class="panel-header"><span>パレット</span><button class="collapse-btn" aria-label="toggle"></button></div>
+            <div class="panel-body">
+              <div class="row gap">
+                <button type="button" id="savePaletteBtn">保存</button>
+                <label class="palette-load">読み込み <input type="file" id="loadPaletteInput" accept="application/json,text/plain"></label>
+              </div>
+              <div id="colorHistory" class="color-history"></div>
+            </div>
+          </div>
+
+          
+        </aside>
+      </div>
+
+      <div class="statusbar">
+        <div id="statusText">準備完了</div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
