@@ -16,3 +16,15 @@ coverage/
 .idea/
 *.swp
 *.swo
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.svg
+*.ico
+*.webp
+kimetu-texture
+*texture*
