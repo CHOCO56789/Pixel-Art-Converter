@@ -496,7 +496,7 @@
   }
 
   function syncOffsetRanges() {
-    const LIM = 10000;
+    const LIM = 500; // Reduced from 10000 to 500 for better slider usability
     offsetXRange.min = String(-LIM);
     offsetXRange.max = String(LIM);
     offsetYRange.min = String(-LIM);
