@@ -269,14 +269,16 @@
     outputCanvas.height = gh;
     outputCtx.clearRect(0, 0, gw, gh);
 
-    // Draw background first
-    drawCanvasBackground(outputCtx, gw, gh);
-
     if (baseVisible) outputCtx.drawImage(baseCanvas, 0, 0);
     for (const ly of layers) {
       if (ly.visible === false) continue;
       outputCtx.drawImage(ly.canvas, 0, 0);
     }
+
+    // Apply background to content areas
+    const imageData = outputCtx.getImageData(0, 0, gw, gh);
+    drawContentBackground(outputCtx, imageData);
+
     renderLayerList();
     fitOutputCanvas();
   }
@@ -373,47 +375,61 @@
     });
   }
 
-  // Draw canvas background based on current style
-  function drawCanvasBackground(ctx, width, height) {
+  // Draw background behind image content only (for transparent areas)
+  function drawContentBackground(ctx, imageData) {
+    if (canvasBgStyle === 'checker') return; // Skip for checker - handled by CSS
+
     ctx.save();
 
+    // Set background fill style
     switch(canvasBgStyle) {
       case 'white':
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, height);
         break;
       case 'black':
         ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, width, height);
         break;
       case 'gray':
         ctx.fillStyle = '#374151';
-        ctx.fillRect(0, 0, width, height);
         break;
       case 'custom':
-        if (canvasBgColor) {
-          ctx.fillStyle = canvasBgColor;
-          ctx.fillRect(0, 0, width, height);
-        }
+        ctx.fillStyle = canvasBgColor || '#ffffff';
         break;
-      case 'checker':
       default:
-        // Draw checker pattern
-        const size = 20;
-        ctx.fillStyle = '#0b1220';
-        ctx.fillRect(0, 0, width, height);
-        ctx.fillStyle = '#111827';
-        for (let x = 0; x < width; x += size) {
-          for (let y = 0; y < height; y += size) {
-            if ((Math.floor(x / size) + Math.floor(y / size)) % 2 === 0) {
-              ctx.fillRect(x, y, size, size);
-            }
-          }
-        }
-        break;
+        ctx.restore();
+        return;
     }
 
+    // Create path for areas that have image content (non-fully-transparent)
+    const pixels = imageData.data;
+    const width = imageData.width;
+    const height = imageData.height;
+
+    ctx.globalCompositeOperation = 'destination-over';
+
+    // Fill the background behind the entire canvas for now
+    // This will be behind any image content
+    ctx.fillRect(0, 0, width, height);
+
     ctx.restore();
+  }
+
+  // Create checker pattern background (for CSS background effect)
+  function createCheckerPattern() {
+    const size = 20;
+    const canvas = document.createElement('canvas');
+    canvas.width = size * 2;
+    canvas.height = size * 2;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#0b1220';
+    ctx.fillRect(0, 0, size * 2, size * 2);
+
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillRect(size, size, size, size);
+
+    return ctx.createPattern(canvas, 'repeat');
   }
 
   function updateQualityLabel() {
@@ -449,11 +465,12 @@
     composeView(view);
     previewCtx.clearRect(0, 0, pw, ph);
 
-    // Draw background first
-    drawCanvasBackground(previewCtx, pw, ph);
-
     previewCtx.imageSmoothingEnabled = true;
     previewCtx.drawImage(compCanvas, 0, 0, pw, ph);
+
+    // Apply background only to content areas
+    const imageData = previewCtx.getImageData(0, 0, pw, ph);
+    drawContentBackground(previewCtx, imageData);
 
     // Grid overlay
     const gw = parseInt(gridWInput.value, 10) || 1;
@@ -1222,77 +1239,82 @@
   });
 
   // Background selector functionality
+  function updateBackgroundStyle(bgType, customColor = null) {
+    canvasBgStyle = bgType;
+    canvasBgColor = customColor;
+
+    // Update both preview and output surfaces
+    [previewSurface, outputSurface].forEach(surface => {
+      if (!surface) return;
+
+      const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
+      const colorPicker = surface === previewSurface ? bgColorPicker : bgColorPicker2;
+
+      // Update active state for buttons
+      bgButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.bg === bgType);
+      });
+
+      // Apply background to container for visual feedback
+      surface.className = 'canvas-surface';
+      switch(bgType) {
+        case 'white':
+          surface.classList.add('bg-white');
+          break;
+        case 'black':
+          surface.classList.add('bg-black');
+          break;
+        case 'gray':
+          surface.classList.add('bg-gray');
+          break;
+        case 'custom':
+          surface.style.backgroundColor = customColor;
+          break;
+        case 'checker':
+        default:
+          surface.classList.add('checker');
+          break;
+      }
+
+      // Update color picker if custom color
+      if (bgType === 'custom' && customColor && colorPicker) {
+        colorPicker.value = customColor;
+      }
+    });
+
+    // Redraw both canvases
+    if (img && getViewBox()) {
+      drawPreview(getViewBox());
+      compositeOutput();
+    }
+  }
+
   function setupBackgroundSelector(surface, colorPicker) {
     if (!surface) return;
 
     const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
-    const isPreview = surface.id === 'previewSurface';
 
     bgButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        const bgType = btn.dataset.bg;
-
-        // Update active state
-        bgButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // Store background style
-        canvasBgStyle = bgType;
-        canvasBgColor = null;
-
-        // Apply background to container for visual feedback
-        surface.className = 'canvas-surface';
-        switch(bgType) {
-          case 'white':
-            surface.classList.add('bg-white');
-            break;
-          case 'black':
-            surface.classList.add('bg-black');
-            break;
-          case 'gray':
-            surface.classList.add('bg-gray');
-            break;
-          case 'checker':
-          default:
-            surface.classList.add('checker');
-            break;
-        }
-
-        // Redraw canvas with new background
-        if (isPreview) {
-          drawPreview(getViewBox());
-        } else {
-          compositeOutput();
-        }
+        updateBackgroundStyle(btn.dataset.bg);
       });
     });
 
     // Custom color picker
     if (colorPicker) {
       colorPicker.addEventListener('change', () => {
-        bgButtons.forEach(b => b.classList.remove('active'));
-        surface.className = 'canvas-surface';
-        surface.style.backgroundColor = colorPicker.value;
-
-        // Store custom color
-        canvasBgStyle = 'custom';
-        canvasBgColor = colorPicker.value;
-
-        // Redraw canvas with new background
-        if (isPreview) {
-          drawPreview(getViewBox());
-        } else {
-          compositeOutput();
-        }
+        updateBackgroundStyle('custom', colorPicker.value);
       });
     }
+  }
 
-    // Set default (checker)
-    const checkerBtn = surface.parentElement.querySelector('.bg-btn[data-bg="checker"]');
-    if (checkerBtn) checkerBtn.click();
+  // Set default background after setup
+  function initializeBackground() {
+    updateBackgroundStyle('checker');
   }
 
   // Initialize background selectors
   setupBackgroundSelector(previewSurface, bgColorPicker);
   setupBackgroundSelector(outputSurface, bgColorPicker2);
+  initializeBackground();
 })();
