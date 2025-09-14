@@ -54,6 +54,8 @@
   const outputSurface = document.getElementById('outputSurface');
   const bgColorPicker = document.getElementById('bgColorPicker');
   const bgColorPicker2 = document.getElementById('bgColorPicker2');
+  let canvasBgStyle = 'checker'; // Current background style
+  let canvasBgColor = null; // Custom background color
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
 
@@ -266,6 +268,10 @@
     outputCanvas.width = gw;
     outputCanvas.height = gh;
     outputCtx.clearRect(0, 0, gw, gh);
+
+    // Draw background first
+    drawCanvasBackground(outputCtx, gw, gh);
+
     if (baseVisible) outputCtx.drawImage(baseCanvas, 0, 0);
     for (const ly of layers) {
       if (ly.visible === false) continue;
@@ -367,6 +373,49 @@
     });
   }
 
+  // Draw canvas background based on current style
+  function drawCanvasBackground(ctx, width, height) {
+    ctx.save();
+
+    switch(canvasBgStyle) {
+      case 'white':
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'black':
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'gray':
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'custom':
+        if (canvasBgColor) {
+          ctx.fillStyle = canvasBgColor;
+          ctx.fillRect(0, 0, width, height);
+        }
+        break;
+      case 'checker':
+      default:
+        // Draw checker pattern
+        const size = 20;
+        ctx.fillStyle = '#0b1220';
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#111827';
+        for (let x = 0; x < width; x += size) {
+          for (let y = 0; y < height; y += size) {
+            if ((Math.floor(x / size) + Math.floor(y / size)) % 2 === 0) {
+              ctx.fillRect(x, y, size, size);
+            }
+          }
+        }
+        break;
+    }
+
+    ctx.restore();
+  }
+
   function updateQualityLabel() {
     qualityLabel.textContent = String(qualityInput.value);
   }
@@ -399,6 +448,10 @@
     const ph = previewCanvas.height;
     composeView(view);
     previewCtx.clearRect(0, 0, pw, ph);
+
+    // Draw background first
+    drawCanvasBackground(previewCtx, pw, ph);
+
     previewCtx.imageSmoothingEnabled = true;
     previewCtx.drawImage(compCanvas, 0, 0, pw, ph);
 
@@ -1173,6 +1226,7 @@
     if (!surface) return;
 
     const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
+    const isPreview = surface.id === 'previewSurface';
 
     bgButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1182,7 +1236,11 @@
         bgButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // Apply background
+        // Store background style
+        canvasBgStyle = bgType;
+        canvasBgColor = null;
+
+        // Apply background to container for visual feedback
         surface.className = 'canvas-surface';
         switch(bgType) {
           case 'white':
@@ -1199,6 +1257,13 @@
             surface.classList.add('checker');
             break;
         }
+
+        // Redraw canvas with new background
+        if (isPreview) {
+          drawPreview(getViewBox());
+        } else {
+          compositeOutput();
+        }
       });
     });
 
@@ -1208,6 +1273,17 @@
         bgButtons.forEach(b => b.classList.remove('active'));
         surface.className = 'canvas-surface';
         surface.style.backgroundColor = colorPicker.value;
+
+        // Store custom color
+        canvasBgStyle = 'custom';
+        canvasBgColor = colorPicker.value;
+
+        // Redraw canvas with new background
+        if (isPreview) {
+          drawPreview(getViewBox());
+        } else {
+          compositeOutput();
+        }
       });
     }
 
