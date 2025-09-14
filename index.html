@@ -98,8 +98,8 @@
             <div class="group normalize-only">
               <div class="group-title">グリッド設定（出力サイズ）</div>
               <div class="row">
-                <label>横（W）<input type="number" id="gridW" min="1" max="256" value="32" class="num"></label>
-                <label>縦（H）<input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
+                <label>W <input type="number" id="gridW" min="1" max="256" value="32" class="num"></label>
+                <label>H <input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
                 <label><input type="checkbox" id="gridLockAspect" checked> 比率を固定</label>
                 <label>比率（W:H）<input type="text" id="gridAspect" value="1:1" class="num" placeholder="1:1"></label>
               </div>
@@ -108,11 +108,11 @@
             <div class="group normalize-only">
               <div class="group-title">拡大縮小</div>
               <div class="row">
-                <label>横倍率
+                <label>X
                   <input type="range" id="scaleX" min="0.1" max="8" step="0.01" value="1">
                   <input type="number" id="scaleXNum" min="0.1" max="8" step="0.01" value="1" class="num">
                 </label>
-                <label>縦倍率
+                <label>Y
                   <input type="range" id="scaleY" min="0.1" max="8" step="0.01" value="1">
                   <input type="number" id="scaleYNum" min="0.1" max="8" step="0.01" value="1" class="num">
                 </label>
@@ -123,11 +123,11 @@
             <div class="group normalize-only">
               <div class="group-title">位置調整</div>
               <div class="row">
-                <label>オフセットX
+                <label>X
                   <input type="range" id="offsetXRange" min="0" max="0" step="1" value="0">
                   <input type="number" id="offsetX" value="0" class="num">
                 </label>
-                <label>オフセットY
+                <label>Y
                   <input type="range" id="offsetYRange" min="0" max="0" step="1" value="0">
                   <input type="number" id="offsetY" value="0" class="num">
                 </label>
