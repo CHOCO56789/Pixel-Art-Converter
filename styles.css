@@ -154,6 +154,8 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
   input[type="range"] { width: 80px; }
   label { font-size: 11px; gap: 3px; }
   .canvas-wrap { min-height: 150px; flex: 1; }
+  body.edit-mode .canvas-wrap#outputWrap { min-height: 200px; }
+  body.edit-mode .canvas-wrap#outputWrap .canvas-surface { min-height: 200px; }
   .panel-header { padding: 4px 6px; font-size: 10px; }
   .bg-selector { gap: 2px; }
   .bg-btn { padding: 1px 3px; font-size: 10px; min-width: 18px; height: 18px; }

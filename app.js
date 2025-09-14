@@ -292,7 +292,12 @@
     const rect = surface.getBoundingClientRect();
     const availW = Math.max(1, Math.floor(rect.width - 16));
     const availH = Math.max(1, Math.floor(rect.height - 16));
-    const scale = Math.max(1, Math.floor(Math.min(availW / gw, availH / gh)));
+
+    // Check if mobile (768px or less)
+    const isMobile = window.innerWidth <= 768;
+    const minScale = isMobile ? 3 : 1; // Higher minimum scale on mobile
+
+    const scale = Math.max(minScale, Math.floor(Math.min(availW / gw, availH / gh)));
     const cssW = gw * scale;
     const cssH = gh * scale;
     outputCanvas.style.width = cssW + 'px';
