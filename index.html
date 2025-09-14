@@ -140,12 +140,30 @@
 
           <div class="canvas-area">
             <div class="canvas-wrap" id="previewWrap">
-              <div class="panel-header">元画像（ビュー）＋グリッド</div>
-              <div class="canvas-surface checker"><canvas id="previewCanvas" width="512" height="512"></canvas></div>
+              <div class="panel-header">
+                <span>元画像（ビュー）＋グリッド</span>
+                <div class="bg-selector">
+                  <button class="bg-btn" data-bg="checker" title="チェッカー">▦</button>
+                  <button class="bg-btn" data-bg="white" title="白">□</button>
+                  <button class="bg-btn" data-bg="black" title="黒">■</button>
+                  <button class="bg-btn" data-bg="gray" title="グレー">▨</button>
+                  <input type="color" id="bgColorPicker" class="bg-color-picker" title="カスタム色">
+                </div>
+              </div>
+              <div class="canvas-surface checker" id="previewSurface"><canvas id="previewCanvas" width="512" height="512"></canvas></div>
             </div>
             <div class="canvas-wrap" id="outputWrap">
-              <div class="panel-header">ピクセル編集</div>
-              <div class="canvas-surface checker"><canvas id="outputCanvas" width="32" height="32" class="pixelated"></canvas></div>
+              <div class="panel-header">
+                <span>ピクセル編集</span>
+                <div class="bg-selector">
+                  <button class="bg-btn" data-bg="checker" title="チェッカー">▦</button>
+                  <button class="bg-btn" data-bg="white" title="白">□</button>
+                  <button class="bg-btn" data-bg="black" title="黒">■</button>
+                  <button class="bg-btn" data-bg="gray" title="グレー">▨</button>
+                  <input type="color" id="bgColorPicker2" class="bg-color-picker" title="カスタム色">
+                </div>
+              </div>
+              <div class="canvas-surface checker" id="outputSurface"><canvas id="outputCanvas" width="32" height="32" class="pixelated"></canvas></div>
             </div>
           </div>
         </section>

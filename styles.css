@@ -58,12 +58,20 @@ body:not(.edit-mode) .main { grid-template-columns: 1fr; }
 .canvas-surface { padding: 10px; overflow: auto; height: 100%; display: flex; align-items: center; justify-content: center; }
 .canvas-wrap { background: var(--card); border: 1px solid #1f2937; border-radius: 10px; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
 .panel-header { padding: 8px 10px; font-size: 12px; color: var(--muted); border-bottom: 1px solid #1f2937; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bg-selector { display: flex; gap: 4px; align-items: center; }
+.bg-btn { background: #0b1220; border: 1px solid #1f2937; color: #e5e7eb; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 14px; min-width: 24px; height: 24px; }
+.bg-btn:hover { background: #1f2937; }
+.bg-btn.active { outline: 2px solid #2563eb; }
+.bg-color-picker { width: 24px; height: 24px; padding: 0; border: 1px solid #1f2937; border-radius: 4px; cursor: pointer; }
 .collapse-btn { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 22px; height: 22px; display: grid; place-items: center; cursor: pointer; }
 .collapse-btn::before { content: '▾'; line-height: 1; }
 .panel.collapsed .collapse-btn { transform: rotate(-90deg); }
 .panel.collapsed .panel-body { display: none; }
 .canvas-surface { padding: 10px; overflow: auto; }
 .checker { background-image: linear-gradient(45deg,#111827 25%,transparent 25%),linear-gradient(-45deg,#111827 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#111827 75%),linear-gradient(-45deg,transparent 75%,#111827 75%); background-size: 20px 20px; background-position: 0 0,0 10px,10px -10px,-10px 0px; }
+.bg-white { background: white !important; }
+.bg-black { background: black !important; }
+.bg-gray { background: #374151 !important; }
 canvas { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; background: #0b1220; border: 1px solid #1f2937; border-radius: 6px; }
 .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
 
@@ -132,8 +140,12 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
 @media (max-width: 768px) {
   .main { grid-template-columns: 1fr; padding: 8px; }
   .sidebar, .panels { display: none !important; }
-  .topbar { max-height: 50vh; }
+  .topbar { max-height: 25vh; padding: 6px; gap: 6px; }
   .canvas-area { grid-template-columns: 1fr !important; }
   .title-actions .ghost { padding: 6px 8px; }
   .tool-btn { min-height: 40px; font-size: 16px; }
+  .group { gap: 4px; }
+  .row { gap: 8px !important; }
+  input[type="number"], select { padding: 4px 6px; font-size: 14px; }
+  .num { width: 60px; }
 }

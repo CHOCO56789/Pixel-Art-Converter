@@ -48,6 +48,12 @@
   const openFileBtn = document.getElementById('openFileBtn');
   const exportToggle = document.getElementById('exportToggle');
   const exportPopover = document.getElementById('exportPopover');
+
+  // Background selector elements
+  const previewSurface = document.getElementById('previewSurface');
+  const outputSurface = document.getElementById('outputSurface');
+  const bgColorPicker = document.getElementById('bgColorPicker');
+  const bgColorPicker2 = document.getElementById('bgColorPicker2');
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
 
@@ -1131,4 +1137,56 @@
       panel.classList.toggle('collapsed');
     });
   });
+
+  // Background selector functionality
+  function setupBackgroundSelector(surface, colorPicker) {
+    if (!surface) return;
+
+    const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
+
+    bgButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const bgType = btn.dataset.bg;
+
+        // Update active state
+        bgButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Apply background
+        surface.className = 'canvas-surface';
+        switch(bgType) {
+          case 'white':
+            surface.classList.add('bg-white');
+            break;
+          case 'black':
+            surface.classList.add('bg-black');
+            break;
+          case 'gray':
+            surface.classList.add('bg-gray');
+            break;
+          case 'checker':
+          default:
+            surface.classList.add('checker');
+            break;
+        }
+      });
+    });
+
+    // Custom color picker
+    if (colorPicker) {
+      colorPicker.addEventListener('change', () => {
+        bgButtons.forEach(b => b.classList.remove('active'));
+        surface.className = 'canvas-surface';
+        surface.style.backgroundColor = colorPicker.value;
+      });
+    }
+
+    // Set default (checker)
+    const checkerBtn = surface.parentElement.querySelector('.bg-btn[data-bg="checker"]');
+    if (checkerBtn) checkerBtn.click();
+  }
+
+  // Initialize background selectors
+  setupBackgroundSelector(previewSurface, bgColorPicker);
+  setupBackgroundSelector(outputSurface, bgColorPicker2);
 })();
