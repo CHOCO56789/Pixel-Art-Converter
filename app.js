@@ -61,7 +61,6 @@
   const previewCtx = previewCanvas.getContext('2d');
   const outputCanvas = document.getElementById('outputCanvas');
   const outputCtx = outputCanvas.getContext('2d');
-  const outputSurface = document.querySelector('#outputWrap .canvas-surface');
   // Base (auto pixelated) and paint (user edits) layers
   const baseCanvas = document.createElement('canvas');
   const baseCtx = baseCanvas.getContext('2d');
