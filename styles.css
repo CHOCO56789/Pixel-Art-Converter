@@ -140,20 +140,22 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
 @media (max-width: 768px) {
   .main { grid-template-columns: 1fr; padding: 8px; }
   .sidebar, .panels { display: none !important; }
-  .topbar { max-height: 20vh; padding: 4px; gap: 4px; font-size: 13px; }
-  .mode-bar { padding: 4px; }
-  .canvas-area { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .title-actions .ghost { padding: 4px 6px; font-size: 13px; }
+  .topbar { max-height: 15vh; padding: 3px; gap: 3px; font-size: 12px; overflow-y: auto; }
+  .mode-bar { padding: 3px; }
+  .canvas-area { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 6px; }
+  .title-actions .ghost { padding: 3px 5px; font-size: 12px; }
   .tool-btn { min-height: 40px; font-size: 16px; }
-  .group { gap: 3px; }
-  .group-title { font-size: 10px; }
-  .row { gap: 6px !important; }
-  input[type="number"], select { padding: 3px 4px; font-size: 12px; }
-  .num { width: 50px; }
-  label { font-size: 12px; gap: 4px; }
-  .canvas-wrap { min-height: 200px; }
-  .panel-header { padding: 6px 8px; font-size: 11px; }
+  .group { gap: 2px; }
+  .group-title { font-size: 9px; margin-bottom: 1px; }
+  .row { gap: 4px !important; flex-wrap: wrap; }
+  input[type="number"], select { padding: 2px 3px; font-size: 11px; }
+  .num { width: 45px; }
+  input[type="range"] { width: 80px; }
+  label { font-size: 11px; gap: 3px; }
+  .canvas-wrap { min-height: 150px; flex: 1; }
+  .panel-header { padding: 4px 6px; font-size: 10px; }
   .bg-selector { gap: 2px; }
-  .bg-btn { padding: 2px 4px; font-size: 12px; min-width: 20px; height: 20px; }
-  .bg-color-picker { width: 20px; height: 20px; }
+  .bg-btn { padding: 1px 3px; font-size: 10px; min-width: 18px; height: 18px; }
+  .bg-color-picker { width: 18px; height: 18px; }
+  .workspace { gap: 6px; }
 }
