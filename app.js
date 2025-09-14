@@ -638,20 +638,38 @@
 
   // Event wiring
   fileInput.addEventListener('change', async (e) => {
+    console.log('File input changed');
     const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    img = await readImage(f);
-    // Fit source into srcCanvas (keep original size for fidelity)
-    srcCanvas.width = img.naturalWidth;
-    srcCanvas.height = img.naturalHeight;
-    srcCtx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
-    srcCtx.drawImage(img, 0, 0);
-    // Reset offsets
-    offsetXInput.value = '0';
-    offsetYInput.value = '0';
-    offsetXRange.value = '0';
-    offsetYRange.value = '0';
-    render();
+    if (!f) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', f.name);
+    statusText.textContent = '画像を読み込み中...';
+
+    try {
+      img = await readImage(f);
+      console.log('Image loaded successfully');
+
+      // Fit source into srcCanvas (keep original size for fidelity)
+      srcCanvas.width = img.naturalWidth;
+      srcCanvas.height = img.naturalHeight;
+      srcCtx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
+      srcCtx.drawImage(img, 0, 0);
+
+      // Reset offsets
+      offsetXInput.value = '0';
+      offsetYInput.value = '0';
+      offsetXRange.value = '0';
+      offsetYRange.value = '0';
+
+      statusText.textContent = '画像を読み込みました';
+      render();
+    } catch (error) {
+      console.error('Error loading image:', error);
+      statusText.textContent = 'エラー: 画像の読み込みに失敗しました';
+    }
   });
 
   [gridWInput, gridHInput, methodSelect, qualityInput,
@@ -733,7 +751,20 @@
   undoBtn.addEventListener('click', undoPaint);
   redoBtn.addEventListener('click', redoPaint);
   clearPaintBtn.addEventListener('click', clearPaint);
-  if (openFileBtn) { openFileBtn.addEventListener('click', () => fileInput && fileInput.click()); }
+  if (openFileBtn) {
+    openFileBtn.addEventListener('click', () => {
+      console.log('Open file button clicked');
+      if (fileInput) {
+        console.log('File input found, triggering click');
+        fileInput.click();
+      } else {
+        console.error('File input not found');
+        statusText.textContent = 'エラー: ファイル入力が見つかりません';
+      }
+    });
+  } else {
+    console.error('Open file button not found');
+  }
   if (exportToggle && exportPopover) {
     exportToggle.addEventListener('click', (e) => {
       e.stopPropagation();
