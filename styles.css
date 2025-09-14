@@ -140,12 +140,20 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
 @media (max-width: 768px) {
   .main { grid-template-columns: 1fr; padding: 8px; }
   .sidebar, .panels { display: none !important; }
-  .topbar { max-height: 25vh; padding: 6px; gap: 6px; }
-  .canvas-area { grid-template-columns: 1fr !important; }
-  .title-actions .ghost { padding: 6px 8px; }
+  .topbar { max-height: 20vh; padding: 4px; gap: 4px; font-size: 13px; }
+  .mode-bar { padding: 4px; }
+  .canvas-area { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .title-actions .ghost { padding: 4px 6px; font-size: 13px; }
   .tool-btn { min-height: 40px; font-size: 16px; }
-  .group { gap: 4px; }
-  .row { gap: 8px !important; }
-  input[type="number"], select { padding: 4px 6px; font-size: 14px; }
-  .num { width: 60px; }
+  .group { gap: 3px; }
+  .group-title { font-size: 10px; }
+  .row { gap: 6px !important; }
+  input[type="number"], select { padding: 3px 4px; font-size: 12px; }
+  .num { width: 50px; }
+  label { font-size: 12px; gap: 4px; }
+  .canvas-wrap { min-height: 200px; }
+  .panel-header { padding: 6px 8px; font-size: 11px; }
+  .bg-selector { gap: 2px; }
+  .bg-btn { padding: 2px 4px; font-size: 12px; min-width: 20px; height: 20px; }
+  .bg-color-picker { width: 20px; height: 20px; }
 }
