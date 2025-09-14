@@ -142,7 +142,8 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
   .sidebar, .panels { display: none !important; }
   .topbar { max-height: 15vh; padding: 3px; gap: 3px; font-size: 12px; overflow-y: auto; }
   .mode-bar { padding: 3px; }
-  .canvas-area { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 6px; }
+  .canvas-area { display: grid !important; grid-template-columns: 1fr !important; grid-template-rows: 1fr 1fr !important; gap: 6px !important; }
+  .canvas-area .canvas-wrap { min-height: 0; }
   .title-actions .ghost { padding: 3px 5px; font-size: 12px; }
   .tool-btn { min-height: 40px; font-size: 16px; }
   .group { gap: 2px; }
