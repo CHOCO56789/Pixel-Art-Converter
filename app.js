@@ -53,7 +53,6 @@
   const previewSurface = document.getElementById('previewSurface');
   const outputSurface = document.getElementById('outputSurface');
   const bgColorPicker = document.getElementById('bgColorPicker');
-  const bgColorPicker2 = document.getElementById('bgColorPicker2');
   let canvasBgStyle = 'checker'; // Current background style
   let canvasBgColor = null; // Custom background color
   const statusText = document.getElementById('statusText');
@@ -1248,7 +1247,7 @@
       if (!surface) return;
 
       const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
-      const colorPicker = surface === previewSurface ? bgColorPicker : bgColorPicker2;
+      const colorPicker = bgColorPicker;
 
       // Update active state for buttons
       bgButtons.forEach(btn => {
@@ -1314,7 +1313,6 @@
   }
 
   // Initialize background selectors
-  setupBackgroundSelector(previewSurface, bgColorPicker);
-  setupBackgroundSelector(outputSurface, bgColorPicker2);
+  setupBackgroundSelector(outputSurface, bgColorPicker);
   initializeBackground();
 })();
