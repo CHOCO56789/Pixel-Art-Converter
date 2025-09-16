@@ -1185,8 +1185,8 @@
   let dragging = false;
   let dragStart = null;
   function pvRect() { return previewCanvas.getBoundingClientRect(); }
-  function pvDown(e){ dragging=true; const r=pvRect(); const x=e.clientX-r.left, y=e.clientY-r.top; dragStart={x,y,ox:parseInt(offsetXInput.value||'0',10),oy:parseInt(offsetYInput.value||'0',10)}; }
-  function pvMove(e){ if(!dragging) return; const r=pvRect(); const x=e.clientX-r.left, y=e.clientY-r.top; const dx=x-dragStart.x, dy=y-dragStart.y; const view=getViewBox(); if(!view) return; const pw=previewCanvas.width, ph=previewCanvas.height; const vx=Math.round(dx*(view.vw/pw)); const vy=Math.round(dy*(view.vh/ph)); const newOx=dragStart.ox+vx, newOy=dragStart.oy+vy; offsetXInput.value=String(newOx); offsetYInput.value=String(newOy); offsetXRange.value=String(newOx); offsetYRange.value=String(newOy); render(); }
+  function pvDown(e){ e.preventDefault(); dragging=true; const r=pvRect(); const x=e.clientX-r.left, y=e.clientY-r.top; dragStart={x,y,ox:parseInt(offsetXInput.value||'0',10),oy:parseInt(offsetYInput.value||'0',10)}; }
+  function pvMove(e){ if(!dragging) return; e.preventDefault(); const r=pvRect(); const x=e.clientX-r.left, y=e.clientY-r.top; const dx=x-dragStart.x, dy=y-dragStart.y; const view=getViewBox(); if(!view) return; const pw=previewCanvas.width, ph=previewCanvas.height; const vx=Math.round(dx*(view.vw/pw)); const vy=Math.round(dy*(view.vh/ph)); const newOx=dragStart.ox+vx, newOy=dragStart.oy+vy; offsetXInput.value=String(newOx); offsetYInput.value=String(newOy); offsetXRange.value=String(newOx); offsetYRange.value=String(newOy); render(); }
   function pvUp(){ dragging=false; dragStart=null; }
   if (window.PointerEvent){ previewCanvas.addEventListener('pointerdown', pvDown); window.addEventListener('pointermove', pvMove); window.addEventListener('pointerup', pvUp); window.addEventListener('pointercancel', pvUp);} else { previewCanvas.addEventListener('mousedown', pvDown); window.addEventListener('mousemove', pvMove); window.addEventListener('mouseup', pvUp); }
 
@@ -1203,6 +1203,7 @@
   function ocRect(){ return outputCanvas.getBoundingClientRect(); }
   function ocCoords(e){ const r=ocRect(); const x=e.clientX-r.left, y=e.clientY-r.top; return { gx: Math.floor(x*(outputCanvas.width/r.width)), gy: Math.floor(y*(outputCanvas.height/r.height)) }; }
   function ocDown(e){
+    e.preventDefault();
     if (appMode !== 'edit') return; // 編集モードのみ描画可能
     if (!paintCanvas || !paintCanvas.width) return;
     const { gx, gy } = ocCoords(e);
@@ -1265,6 +1266,7 @@
     const tool = toolSelect.value;
     if (tool === 'move') {
       if (!moving || !moveSnapshot) return;
+      e.preventDefault();
       const { gx, gy } = ocCoords(e);
       const dx = gx - moveStart.x;
       const dy = gy - moveStart.y;
@@ -1277,6 +1279,7 @@
     }
     if (!painting) return;
     const { gx, gy } = ocCoords(e);
+    e.preventDefault();
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     if (tool === 'line' || tool === 'rect') {
       if (startPoint) drawPreviewOverlay(tool, startPoint.x, startPoint.y, gx, gy);
