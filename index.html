@@ -104,6 +104,7 @@
                 <label>H <input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
                 <label><input type="checkbox" id="gridLockAspect" checked> 比率を固定</label>
                 <label>比率（W:H）<input type="text" id="gridAspect" value="1:1" class="num" placeholder="1:1"></label>
+                <label><input type="checkbox" id="showGrid" checked> グリッドを表示</label>
               </div>
             </div>
 
@@ -148,15 +149,35 @@
             <div class="canvas-wrap" id="outputWrap">
               <div class="panel-header">
                 <span>ピクセル編集</span>
-                <div class="bg-selector">
-                  <button class="bg-btn" data-bg="checker" title="チェッカー">▦</button>
+                <div class="mobile-tools" aria-label="ツール(モバイル)">
+                  <!-- よく使う順に整理: ペン/消しゴム/塗り/スポイト/直線/矩形/移動 -->
+                  <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
+                  <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
+                  <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
+                  <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
+                  <button class="tool-btn" data-tool="line" title="直線">📏</button>
+                  <button class="tool-btn" data-tool="rect" title="矩形">▭</button>
+                  <button class="tool-btn" data-tool="move" title="移動">✋</button>
+                </div>
+                <div class="bg-selector" aria-label="背景色">
+                  <button class="bg-btn" data-bg="checker" title="チェッカー(透明)">▦</button>
                   <button class="bg-btn" data-bg="white" title="白">□</button>
                   <button class="bg-btn" data-bg="black" title="黒">■</button>
-                  <button class="bg-btn" data-bg="gray" title="グレー">▨</button>
+                  <button class="bg-btn" data-bg="lightgray" title="薄灰">▥</button>
+                  <button class="bg-btn" data-bg="gray" title="濃灰">▨</button>
                   <input type="color" id="bgColorPicker" class="bg-color-picker" title="カスタム色">
                 </div>
+                <button id="layersToggle" class="ghost" title="レイヤー">レイヤー</button>
               </div>
               <div class="canvas-surface checker" id="outputSurface"><canvas id="outputCanvas" width="32" height="32" class="pixelated"></canvas></div>
+              <div id="layersPopover" class="popover hidden">
+                <div class="popover-title">レイヤー</div>
+                <div id="layerListMobile" class="layer-list"></div>
+                <div class="row gap" style="margin-top:6px;">
+                  <button type="button" id="addLayerBtnMobile">追加</button>
+                  <button type="button" id="removeLayerBtnMobile">削除</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -191,6 +212,35 @@
 
       <div class="statusbar">
         <div id="statusText">準備完了</div>
+      </div>
+      <!-- Mobile bottom toolbar (edit mode) -->
+      <div class="mobile-bottom-bar" aria-label="モバイル操作">
+        <button id="mobileUndo" title="元に戻す">↶</button>
+        <button id="mobileRedo" title="やり直す">↷</button>
+        <div class="divider"></div>
+        <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
+        <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
+        <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
+        <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
+        <div class="divider"></div>
+        <button id="mobileBrushDec" title="ブラシ縮小">－</button>
+        <span id="mobileBrushSize" class="label">1</span>
+        <button id="mobileBrushInc" title="ブラシ拡大">＋</button>
+        <div class="divider"></div>
+        <button id="mobileColorBtn" title="色を選択" class="color-chip"></button>
+        <button id="layersToggleMobile" class="ghost" title="レイヤー">レイヤー</button>
+      </div>
+      <!-- Mobile full-screen Layers modal -->
+      <div id="layersModal" class="layer-modal hidden" aria-modal="true" role="dialog">
+        <div class="layer-modal-header">
+          <div class="title">レイヤー</div>
+          <button id="closeLayersModal" class="ghost">閉じる</button>
+        </div>
+        <div id="layersListMobileFull" class="layer-list mobile"></div>
+        <div class="layer-modal-footer">
+          <button type="button" id="addLayerBtnMobile2">追加</button>
+          <button type="button" id="removeLayerBtnMobile2">削除</button>
+        </div>
       </div>
     </div>
 

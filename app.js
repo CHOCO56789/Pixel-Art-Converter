@@ -11,19 +11,16 @@
   const scaleYInput = document.getElementById('scaleY');
   const scaleXNum = document.getElementById('scaleXNum');
   const scaleYNum = document.getElementById('scaleYNum');
-  const scaleXDec = document.getElementById('scaleXDec');
-  const scaleXInc = document.getElementById('scaleXInc');
-  const scaleYDec = document.getElementById('scaleYDec');
-  const scaleYInc = document.getElementById('scaleYInc');
+  // Stepper buttons are not used in current UI
   const lockAspect = document.getElementById('lockAspect');
   const offsetXInput = document.getElementById('offsetX');
   const offsetYInput = document.getElementById('offsetY');
   const offsetXRange = document.getElementById('offsetXRange');
   const offsetYRange = document.getElementById('offsetYRange');
-  const offsetXDec = document.getElementById('offsetXDec');
-  const offsetXInc = document.getElementById('offsetXInc');
-  const offsetYDec = document.getElementById('offsetYDec');
-  const offsetYInc = document.getElementById('offsetYInc');
+  // Offset stepper buttons are not used in current UI
+  
+  // Preview grid visibility
+  const showGrid = document.getElementById('showGrid');
   // No preview scale control; export uses on-screen size
   const downloadBtn = document.getElementById('downloadBtn');
   const exportScaleInput = document.getElementById('exportScale');
@@ -45,9 +42,23 @@
   const loadPaletteInput = document.getElementById('loadPaletteInput');
   const colorHistoryEl = document.getElementById('colorHistory');
   let colorHistory = [];
+  const COLOR_HISTORY_MAX = 48;
   const openFileBtn = document.getElementById('openFileBtn');
   const exportToggle = document.getElementById('exportToggle');
   const exportPopover = document.getElementById('exportPopover');
+  // Mobile bottom bar controls
+  const mobileUndo = document.getElementById('mobileUndo');
+  const mobileRedo = document.getElementById('mobileRedo');
+  const mobileBrushDec = document.getElementById('mobileBrushDec');
+  const mobileBrushInc = document.getElementById('mobileBrushInc');
+  const mobileBrushSize = document.getElementById('mobileBrushSize');
+  const mobileColorBtn = document.getElementById('mobileColorBtn');
+  const layersToggleMobile = document.getElementById('layersToggleMobile');
+  const layersModal = document.getElementById('layersModal');
+  const closeLayersModal = document.getElementById('closeLayersModal');
+  const layersListMobileFull = document.getElementById('layersListMobileFull');
+  const addLayerBtnMobile2 = document.getElementById('addLayerBtnMobile2');
+  const removeLayerBtnMobile2 = document.getElementById('removeLayerBtnMobile2');
 
   // Background selector elements
   const previewSurface = document.getElementById('previewSurface');
@@ -57,6 +68,16 @@
   let canvasBgColor = null; // Custom background color
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
+  
+  function updateMobileBrushUI() {
+    if (mobileBrushSize && brushSizeInput) mobileBrushSize.textContent = String(brushSizeInput.value || '1');
+  }
+  function updateMobileColorChip() {
+    if (!mobileColorBtn || !colorInput) return;
+    mobileColorBtn.style.background = colorInput.value;
+    const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
+    mobileColorBtn.style.backgroundImage = (a < 252) ? 'repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 6px)' : 'none';
+  }
 
   const previewCanvas = document.getElementById('previewCanvas');
   const previewCtx = previewCanvas.getContext('2d');
@@ -232,7 +253,7 @@
     if (!/^#([0-9a-f]{6})$/i.test(hex)) return;
     colorHistory = colorHistory.filter(h => h.toLowerCase() !== hex.toLowerCase());
     colorHistory.unshift(hex);
-    if (colorHistory.length > 16) colorHistory.pop();
+    if (colorHistory.length > COLOR_HISTORY_MAX) colorHistory.pop();
     renderColorHistory();
   }
 
@@ -244,6 +265,20 @@
       d.className = 'swatch'; d.title = hex; d.style.background = hex;
       d.addEventListener('click', () => { colorInput.value = hex; });
       colorHistoryEl.appendChild(d);
+    });
+    updateCurrentColorIndicator();
+  }
+
+  function updateCurrentColorIndicator() {
+    if (!colorHistoryEl) return;
+    const curHex = (colorInput?.value || '').toLowerCase();
+    const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
+    const isSemi = a < 252;
+    Array.from(colorHistoryEl.querySelectorAll('.swatch')).forEach(sw => {
+      const bg = sw.title?.toLowerCase();
+      const isCur = bg === curHex;
+      sw.classList.toggle('is-current', !!isCur);
+      sw.classList.toggle('semi', !!isCur && isSemi);
     });
   }
 
@@ -318,43 +353,102 @@
   }
 
   function renderLayerList() {
-    if (!layerListEl) return;
-    layerListEl.innerHTML = '';
-    // Build items from top to bottom including base at bottom
-    const items = [];
-    items.push({ type: 'base' });
-    for (let i = 0; i < layers.length; i++) items.push({ type: 'layer', index: i });
-    for (let j = items.length - 1; j >= 0; j--) {
-      const it = items[j];
-      const el = document.createElement('div');
-      el.className = 'layer-item';
-      const thumb = document.createElement('div'); thumb.className = 'layer-thumb';
-      const t = document.createElement('canvas'); t.width = 56; t.height = 56; const tctx = t.getContext('2d'); tctx.imageSmoothingEnabled = false;
-      const meta = document.createElement('div'); meta.className = 'layer-meta';
-      const nameEl = document.createElement('div'); nameEl.className = 'layer-name';
-      const tagsEl = document.createElement('div'); tagsEl.className = 'layer-tags';
-      const eye = document.createElement('button'); eye.className = 'layer-eye'; eye.type = 'button';
-      if (it.type === 'base') {
-        nameEl.textContent = 'ベース'; tagsEl.textContent = '変換結果';
-        if (baseVisible === false) el.classList.add('is-hidden');
-        if (editingBase) el.classList.add('selected');
-        if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, 56, 56);
-        eye.addEventListener('click', (e) => { e.stopPropagation(); baseVisible = !baseVisible; compositeOutput(); });
-        el.addEventListener('click', () => { selectBaseForEditing(); compositeOutput(); updateStatus(); });
-      } else {
-        const ly = layers[it.index];
-        nameEl.textContent = ly.name || `Layer ${it.index+1}`; tagsEl.textContent = '編集レイヤー';
-        if (ly.visible === false) el.classList.add('is-hidden');
-        if (!editingBase && currentLayerIndex === it.index) el.classList.add('selected');
-        if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, 56, 56);
-        eye.addEventListener('click', (e) => { e.stopPropagation(); ly.visible = (ly.visible === false) ? true : false; compositeOutput(); });
-        el.addEventListener('click', () => { selectLayerForEditing(it.index); if (layerSelect) layerSelect.value = String(it.index); compositeOutput(); updateStatus(); });
+    const containers = [layerListEl, document.getElementById('layerListMobile'), layersListMobileFull].filter(Boolean);
+    if (!containers.length) return;
+    containers.forEach(container => {
+      container.innerHTML = '';
+      const items = [];
+      items.push({ type: 'base' });
+      for (let i = 0; i < layers.length; i++) items.push({ type: 'layer', index: i });
+      for (let j = items.length - 1; j >= 0; j--) {
+        const it = items[j];
+        const el = document.createElement('div');
+        el.className = 'layer-item';
+        if (it.type === 'layer') { el.setAttribute('draggable', 'true'); el.dataset.index = String(it.index); }
+        const thumb = document.createElement('div'); thumb.className = 'layer-thumb';
+        const t = document.createElement('canvas'); t.width = 56; t.height = 56; const tctx = t.getContext('2d'); tctx.imageSmoothingEnabled = false;
+        const meta = document.createElement('div'); meta.className = 'layer-meta';
+        const nameEl = document.createElement('div'); nameEl.className = 'layer-name';
+        const tagsEl = document.createElement('div'); tagsEl.className = 'layer-tags';
+        const eye = document.createElement('button'); eye.className = 'layer-eye'; eye.type = 'button';
+        const dup = document.createElement('button'); dup.type = 'button'; dup.className = 'layer-btn'; dup.title = '複製'; dup.textContent = '⧉';
+        const merge = document.createElement('button'); merge.type = 'button'; merge.className = 'layer-btn'; merge.title = '下と結合'; merge.textContent = '⇩';
+
+        if (it.type === 'base') {
+          nameEl.textContent = 'ベース'; tagsEl.textContent = '変換結果';
+          if (baseVisible === false) el.classList.add('is-hidden');
+          if (editingBase) el.classList.add('selected');
+          if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, 56, 56);
+          eye.addEventListener('click', (e) => { e.stopPropagation(); baseVisible = !baseVisible; compositeOutput(); });
+          el.addEventListener('click', () => { selectBaseForEditing(); compositeOutput(); updateStatus(); });
+        } else {
+          const ly = layers[it.index];
+          nameEl.textContent = ly.name || `Layer ${it.index+1}`; tagsEl.textContent = '編集レイヤー';
+          if (ly.visible === false) el.classList.add('is-hidden');
+          if (!editingBase && currentLayerIndex === it.index) el.classList.add('selected');
+          if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, 56, 56);
+          eye.addEventListener('click', (e) => { e.stopPropagation(); ly.visible = (ly.visible === false) ? true : false; compositeOutput(); });
+          el.addEventListener('click', () => { selectLayerForEditing(it.index); if (layerSelect) layerSelect.value = String(it.index); compositeOutput(); updateStatus(); });
+          nameEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const newName = prompt('レイヤー名を変更', ly.name || `レイヤー ${it.index+1}`);
+            if (newName && newName.trim()) { ly.name = newName.trim(); compositeOutput(); }
+          });
+          dup.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const gw = baseCanvas.width, gh = baseCanvas.height;
+            const c = document.createElement('canvas'); c.width = gw; c.height = gh;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(ly.canvas, 0, 0);
+            const name = (ly.name || `レイヤー ${it.index+1}`) + ' コピー';
+            layers.splice(it.index+1, 0, { name, canvas: c, ctx, undo: [], redo: [], visible: true });
+            selectLayerForEditing(it.index+1);
+            compositeOutput();
+          });
+          merge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const targetIndex = it.index - 1;
+            const src = layers[it.index];
+            if (targetIndex >= 0) {
+              const dst = layers[targetIndex];
+              dst.ctx.drawImage(src.canvas, 0, 0);
+              layers.splice(it.index, 1);
+              selectLayerForEditing(Math.max(0, targetIndex));
+              compositeOutput();
+            } else {
+              // merge into base
+              baseCtx.drawImage(src.canvas, 0, 0);
+              layers.splice(it.index, 1);
+              selectBaseForEditing();
+              compositeOutput();
+            }
+          });
+
+          // Drag & drop (desktop)
+          el.addEventListener('dragstart', (ev) => {
+            ev.dataTransfer.setData('text/plain', String(it.index));
+            ev.dataTransfer.effectAllowed = 'move';
+          });
+          el.addEventListener('dragover', (ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; });
+          el.addEventListener('drop', (ev) => {
+            ev.preventDefault();
+            const from = parseInt(ev.dataTransfer.getData('text/plain')||'-1',10);
+            const to = parseInt(el.dataset.index||'-1',10);
+            if (isNaN(from) || isNaN(to) || from === to) return;
+            const [moved] = layers.splice(from, 1);
+            layers.splice(to, 0, moved);
+            selectLayerForEditing(to);
+            compositeOutput();
+          });
+        }
+
+        thumb.appendChild(t);
+        meta.appendChild(nameEl); meta.appendChild(tagsEl);
+        el.appendChild(thumb); el.appendChild(meta); el.appendChild(eye);
+        if (it.type === 'layer') { el.appendChild(dup); el.appendChild(merge); }
+        container.appendChild(el);
       }
-      thumb.appendChild(t);
-      meta.appendChild(nameEl); meta.appendChild(tagsEl);
-      el.appendChild(thumb); el.appendChild(meta); el.appendChild(eye);
-      layerListEl.appendChild(el);
-    }
+    });
   }
 
   // Source image canvas
@@ -418,23 +512,7 @@
     ctx.restore();
   }
 
-  // Create checker pattern background (for CSS background effect)
-  function createCheckerPattern() {
-    const size = 20;
-    const canvas = document.createElement('canvas');
-    canvas.width = size * 2;
-    canvas.height = size * 2;
-    const ctx = canvas.getContext('2d');
-
-    ctx.fillStyle = '#0b1220';
-    ctx.fillRect(0, 0, size * 2, size * 2);
-
-    ctx.fillStyle = '#111827';
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillRect(size, size, size, size);
-
-    return ctx.createPattern(canvas, 'repeat');
-  }
+  // (removed) createCheckerPattern: CSS handles checker background
 
   function updateQualityLabel() {
     qualityLabel.textContent = String(qualityInput.value);
@@ -477,27 +555,30 @@
     drawContentBackground(previewCtx, imageData);
 
     // Grid overlay
-    const gw = parseInt(gridWInput.value, 10) || 1;
-    const gh = parseInt(gridHInput.value, 10) || 1;
-    previewCtx.save();
-    previewCtx.globalAlpha = 0.7;
-    previewCtx.strokeStyle = 'rgba(255,255,255,0.35)';
-    previewCtx.lineWidth = 1;
-    for (let i = 1; i < gw; i++) {
-      const x = (i / gw) * pw;
-      previewCtx.beginPath();
-      previewCtx.moveTo(x, 0);
-      previewCtx.lineTo(x, ph);
-      previewCtx.stroke();
+    const drawGrid = !showGrid || showGrid.checked;
+    if (drawGrid) {
+      const gw = parseInt(gridWInput.value, 10) || 1;
+      const gh = parseInt(gridHInput.value, 10) || 1;
+      previewCtx.save();
+      previewCtx.globalAlpha = 0.7;
+      previewCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+      previewCtx.lineWidth = 1;
+      for (let i = 1; i < gw; i++) {
+        const x = (i / gw) * pw;
+        previewCtx.beginPath();
+        previewCtx.moveTo(x, 0);
+        previewCtx.lineTo(x, ph);
+        previewCtx.stroke();
+      }
+      for (let j = 1; j < gh; j++) {
+        const y = (j / gh) * ph;
+        previewCtx.beginPath();
+        previewCtx.moveTo(0, y);
+        previewCtx.lineTo(pw, y);
+        previewCtx.stroke();
+      }
+      previewCtx.restore();
     }
-    for (let j = 1; j < gh; j++) {
-      const y = (j / gh) * ph;
-      previewCtx.beginPath();
-      previewCtx.moveTo(0, y);
-      previewCtx.lineTo(pw, y);
-      previewCtx.stroke();
-    }
-    previewCtx.restore();
   }
 
   function syncOffsetRanges() {
@@ -874,6 +955,50 @@
       compositeOutput();
     });
   }
+  // Mobile bottom bar handlers
+  if (mobileUndo) mobileUndo.addEventListener('click', () => undoPaint());
+  if (mobileRedo) mobileRedo.addEventListener('click', () => redoPaint());
+  if (mobileBrushDec) mobileBrushDec.addEventListener('click', () => {
+    if (!brushSizeInput) return;
+    const v = Math.max(1, Math.min(16, (parseInt(brushSizeInput.value||'1',10)||1) - 1));
+    brushSizeInput.value = String(v);
+    updateMobileBrushUI();
+  });
+  if (mobileBrushInc) mobileBrushInc.addEventListener('click', () => {
+    if (!brushSizeInput) return;
+    const v = Math.max(1, Math.min(16, (parseInt(brushSizeInput.value||'1',10)||1) + 1));
+    brushSizeInput.value = String(v);
+    updateMobileBrushUI();
+  });
+  if (mobileColorBtn) mobileColorBtn.addEventListener('click', () => { if (colorInput) colorInput.click(); });
+  if (layersToggleMobile && layersModal) layersToggleMobile.addEventListener('click', (e) => {
+    e.stopPropagation();
+    layersModal.classList.remove('hidden');
+    renderLayerList();
+  });
+  if (closeLayersModal && layersModal) closeLayersModal.addEventListener('click', () => {
+    layersModal.classList.add('hidden');
+  });
+  if (layersModal) layersModal.addEventListener('click', (e) => {
+    if (e.target === layersModal) layersModal.classList.add('hidden');
+  });
+  if (addLayerBtnMobile2) addLayerBtnMobile2.addEventListener('click', () => {
+    const gw = baseCanvas.width || (parseInt(gridWInput.value||'32',10) || 32);
+    const gh = baseCanvas.height || (parseInt(gridHInput.value||'32',10) || 32);
+    const c = document.createElement('canvas'); c.width = gw; c.height = gh;
+    const ctx = c.getContext('2d');
+    const name = `レイヤー ${layers.length+1}`;
+    layers.push({ name, canvas: c, ctx, undo: [], redo: [], visible: true });
+    selectLayerForEditing(layers.length - 1);
+    compositeOutput();
+  });
+  if (removeLayerBtnMobile2) removeLayerBtnMobile2.addEventListener('click', () => {
+    if (editingBase) { alert('ベースは削除できません'); return; }
+    if (layers.length <= 1) { alert('最低1つのレイヤーが必要です'); return; }
+    layers.splice(currentLayerIndex, 1);
+    selectLayerForEditing(Math.max(0, currentLayerIndex - 1));
+    compositeOutput();
+  });
   if (removeLayerBtn) {
     removeLayerBtn.addEventListener('click', () => {
       if (editingBase) { alert('ベースは削除できません'); return; }
@@ -952,8 +1077,10 @@
     });
   }
   if (colorInput) {
-    colorInput.addEventListener('input', () => addColorToHistory(colorInput.value));
-    addColorToHistory(colorInput.value);
+    colorInput.addEventListener('input', () => { updateCurrentColorIndicator(); updateMobileColorChip(); });
+  }
+  if (alphaInput) {
+    alphaInput.addEventListener('input', () => { updateCurrentColorIndicator(); updateMobileColorChip(); });
   }
   if (loadPaletteInput) {
     loadPaletteInput.addEventListener('change', (e) => {
@@ -1020,51 +1147,13 @@
     const tool = toolSelect?.value || '-';
     const mode = appMode === 'edit' ? '編集' : '変換';
     const target = editingBase ? 'ベース' : `レイヤー${currentLayerIndex+1}`;
-    statusText.textContent = `モード: ${mode} | ツール: ${tool} | 対象: ${target} | グリッド: ${gw}x${gh}`;
+    const col = colorInput?.value || '#000000';
+    const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
+    const gridOn = showGrid ? (showGrid.checked ? 'ON' : 'OFF') : 'ON';
+    statusText.textContent = `モード: ${mode} | ツール: ${tool} | 対象: ${target} | グリッド: ${gw}x${gh} | 色: ${col} / α:${a} | プレビュー格子:${gridOn}`;
   }
 
-  // Steppers for scales
-  function stepScale(which, delta) {
-    const input = which === 'x' ? scaleXInput : scaleYInput;
-    const num = which === 'x' ? scaleXNum : scaleYNum;
-    let v = parseFloat(input.value) || 1;
-    v = clamp(v + delta, 0.1, 8);
-    input.value = String(v);
-    num.value = String(v.toFixed(2));
-    if (lockAspect.checked) {
-      if (which === 'x') {
-        scaleYInput.value = input.value;
-        scaleYNum.value = num.value;
-      } else {
-        scaleXInput.value = input.value;
-        scaleXNum.value = num.value;
-      }
-    }
-    render();
-  }
-  if (scaleXDec) scaleXDec.addEventListener('click', () => stepScale('x', -0.05));
-  if (scaleXInc) scaleXInc.addEventListener('click', () => stepScale('x',  0.05));
-  if (scaleYDec) scaleYDec.addEventListener('click', () => stepScale('y', -0.05));
-  if (scaleYInc) scaleYInc.addEventListener('click', () => stepScale('y',  0.05));
-
-  // Steppers for offsets
-  function stepOffset(which, delta) {
-    const num = which === 'x' ? offsetXInput : offsetYInput;
-    const range = which === 'x' ? offsetXRange : offsetYRange;
-    let v = parseInt(num.value || '0', 10);
-    const min = parseInt(range.min, 10);
-    const max = parseInt(range.max, 10);
-    const lo = isNaN(min) ? -10000 : min;
-    const hi = isNaN(max) ? 10000 : max;
-    v = clamp(v + delta, lo, hi);
-    num.value = String(v);
-    range.value = String(v);
-    render();
-  }
-  if (offsetXDec) offsetXDec.addEventListener('click', () => stepOffset('x', -1));
-  if (offsetXInc) offsetXInc.addEventListener('click', () => stepOffset('x',  1));
-  if (offsetYDec) offsetYDec.addEventListener('click', () => stepOffset('y', -1));
-  if (offsetYInc) offsetYInc.addEventListener('click', () => stepOffset('y',  1));
+  // Removed legacy stepper handlers (buttons not present in UI)
 
   // Init
   updateQualityLabel();
@@ -1080,6 +1169,16 @@
     layers.push({ name: 'レイヤー 1', canvas: paintCanvas, ctx: paintCtx, undo: [], redo: [], visible: true });
     selectLayerForEditing(0);
     if (layerSelect) { layerSelect.innerHTML=''; const opt = document.createElement('option'); opt.value='0'; opt.textContent='レイヤー 1'; layerSelect.appendChild(opt); }
+  }
+  // Init mobile UI indicators
+  updateMobileBrushUI();
+  updateMobileColorChip();
+
+  // Grid visibility toggle
+  if (showGrid) {
+    showGrid.addEventListener('change', () => {
+      if (appMode === 'normalize') render();
+    });
   }
 
   // Drag to pan on preview (updates center-relative offsets)
@@ -1097,6 +1196,7 @@
   let moveStart = null;
   let moveSnapshot = null;
   let startPoint = null;
+  let previewActive = false;
   let longPressTimer = null;
   let longPressActive = false;
   const LONG_PRESS_MS = 400;
@@ -1123,7 +1223,8 @@
       const [r,g,b,a] = getCompositePixel(gx, gy);
       colorInput.value = `#${((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1)}`;
       alphaInput.value = String(a);
-      addColorToHistory(colorInput.value);
+      updateCurrentColorIndicator();
+      updateMobileColorChip();
       return;
     }
     // Long-press temporary picker
@@ -1132,12 +1233,14 @@
       const [r,g,b,a] = getCompositePixel(gx, gy);
       colorInput.value = `#${((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1)}`;
       alphaInput.value = String(a);
-      addColorToHistory(colorInput.value);
+      updateCurrentColorIndicator();
+      updateMobileColorChip();
       longPressActive = true;
     }, LONG_PRESS_MS);
 
     if (tool === 'fill') {
       pushPaintHistory();
+      addColorToHistory(colorInput.value);
       floodFill(gx, gy, getCurrentColor());
       compositeOutput();
       return;
@@ -1146,6 +1249,7 @@
     if (tool === 'line' || tool === 'rect') {
       startPoint = { x: gx, y: gy };
       painting = true;
+      previewActive = true;
       return;
     }
 
@@ -1175,7 +1279,7 @@
     const { gx, gy } = ocCoords(e);
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     if (tool === 'line' || tool === 'rect') {
-      // no live preview for simplicity
+      if (startPoint) drawPreviewOverlay(tool, startPoint.x, startPoint.y, gx, gy);
       return;
     }
     const rgba = (tool === 'eraser') ? [0,0,0,0] : getCurrentColor();
@@ -1192,12 +1296,15 @@
     if (!startPoint) return;
     const { gx, gy } = ocCoords(e);
     const tool = toolSelect.value;
+    if (previewActive) { compositeOutput(); previewActive = false; }
     if (tool === 'line') {
       pushPaintHistory();
+      addColorToHistory(colorInput.value);
       drawLine(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
       compositeOutput();
     } else if (tool === 'rect') {
       pushPaintHistory();
+      addColorToHistory(colorInput.value);
       drawRect(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
       compositeOutput();
     }
@@ -1259,14 +1366,19 @@
         btn.classList.toggle('active', btn.dataset.bg === bgType);
       });
 
-      // Apply background to container for visual feedback
+      // Reset classes and inline background first
       surface.className = 'canvas-surface';
+      surface.style.background = '';
+      surface.style.backgroundColor = '';
       switch(bgType) {
         case 'white':
           surface.classList.add('bg-white');
           break;
         case 'black':
           surface.classList.add('bg-black');
+          break;
+        case 'lightgray':
+          surface.classList.add('bg-lightgray');
           break;
         case 'gray':
           surface.classList.add('bg-gray');
@@ -1320,4 +1432,100 @@
   // Initialize background selectors
   setupBackgroundSelector(outputSurface, bgColorPicker);
   initializeBackground();
+
+  // Layers popover (mobile-friendly)
+  const layersToggle = document.getElementById('layersToggle');
+  const layersPopover = document.getElementById('layersPopover');
+  const addLayerBtnMobile = document.getElementById('addLayerBtnMobile');
+  const removeLayerBtnMobile = document.getElementById('removeLayerBtnMobile');
+  if (layersToggle) {
+    layersToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile && layersModal) {
+        layersModal.classList.remove('hidden');
+        renderLayerList();
+      } else if (layersPopover) {
+        layersPopover.classList.toggle('hidden');
+        if (!layersPopover.classList.contains('hidden')) renderLayerList();
+      }
+    });
+  }
+  if (layersPopover) {
+    document.addEventListener('click', (e) => {
+      if (!layersPopover.classList.contains('hidden')) {
+        if (!e.target.closest('#layersPopover') && !e.target.closest('#layersToggle')) {
+          layersPopover.classList.add('hidden');
+        }
+      }
+    });
+  }
+  if (addLayerBtnMobile) {
+    addLayerBtnMobile.addEventListener('click', () => {
+      const gw = baseCanvas.width || (parseInt(gridWInput.value||'32',10) || 32);
+      const gh = baseCanvas.height || (parseInt(gridHInput.value||'32',10) || 32);
+      const c = document.createElement('canvas'); c.width = gw; c.height = gh;
+      const ctx = c.getContext('2d');
+      const name = `レイヤー ${layers.length+1}`;
+      layers.push({ name, canvas: c, ctx, undo: [], redo: [], visible: true });
+      selectLayerForEditing(layers.length - 1);
+      compositeOutput();
+    });
+  }
+  if (removeLayerBtnMobile) {
+    removeLayerBtnMobile.addEventListener('click', () => {
+      if (editingBase) { alert('ベースは削除できません'); return; }
+      if (layers.length <= 1) { alert('最低1つのレイヤーが必要です'); return; }
+      layers.splice(currentLayerIndex, 1);
+      selectLayerForEditing(Math.max(0, currentLayerIndex - 1));
+      compositeOutput();
+    });
+  }
+
+  // Keyboard shortcuts (desktop)
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target?.tagName || '').toLowerCase();
+    const isTyping = tag === 'input' || tag === 'textarea' || (e.target?.isContentEditable);
+    if (isTyping) return;
+    const k = e.key.toLowerCase();
+    const meta = e.metaKey || e.ctrlKey;
+    if (meta && k === 'z') { e.preventDefault(); if (e.shiftKey) redoPaint(); else undoPaint(); return; }
+    if (k === 'z' && !e.shiftKey && !meta) { e.preventDefault(); undoPaint(); return; }
+    if (k === 'z' && e.shiftKey && !meta) { e.preventDefault(); redoPaint(); return; }
+    const map = { b:'pen', e:'eraser', i:'picker', l:'line', r:'rect', g:'fill', v:'move' };
+    if (map[k]) {
+      toolSelect.value = map[k];
+      toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      e.preventDefault();
+    }
+  });
 })();
+  function drawPreviewOverlay(tool, x0, y0, x1, y1) {
+    // redraw composite, then overlay pixels as cyan
+    compositeOutput();
+    outputCtx.save();
+    outputCtx.imageSmoothingEnabled = false;
+    outputCtx.globalAlpha = 0.9;
+    outputCtx.fillStyle = 'rgba(34,197,94,0.9)'; // accent green for consistency
+    const put = (x,y)=>{ if (x>=0&&y>=0&&x<outputCanvas.width&&y<outputCanvas.height) outputCtx.fillRect(x,y,1,1); };
+    if (tool === 'line') {
+      let dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+      let sx = x0 < x1 ? 1 : -1;
+      let sy = y0 < y1 ? 1 : -1;
+      let err = dx - dy;
+      let cx = x0, cy = y0;
+      while (true) {
+        put(cx, cy);
+        if (cx === x1 && cy === y1) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; cx += sx; }
+        if (e2 < dx) { err += dx; cy += sy; }
+      }
+    } else if (tool === 'rect') {
+      const left = Math.min(x0, x1), right = Math.max(x0, x1);
+      const top = Math.min(y0, y1), bottom = Math.max(y0, y1);
+      for (let x = left; x <= right; x++) { put(x, top); put(x, bottom); }
+      for (let y = top; y <= bottom; y++) { put(left, y); put(right, y); }
+    }
+    outputCtx.restore();
+  }

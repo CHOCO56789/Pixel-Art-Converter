@@ -52,6 +52,17 @@ body:not(.edit-mode) .main { grid-template-columns: 1fr; }
 .mode-steps .spacer { flex: 1; }
 .topbar .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .divider { width: 1px; height: 24px; background: #1f2937; }
+/* Mobile bottom toolbar */
+.mobile-bottom-bar { display: none; position: fixed; left: 0; right: 0; bottom: 26px; /* above statusbar */
+  background: rgba(10,15,26,0.95); backdrop-filter: saturate(120%) blur(6px);
+  border-top: 1px solid #1f2937; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  z-index: 100; gap: 6px; align-items: center; justify-content: center; }
+.mobile-bottom-bar { display: none; }
+.mobile-bottom-bar button, .mobile-bottom-bar .tool-btn { background: #0b1220; border: 1px solid #1f2937; color: #e5e7eb; border-radius: 10px; padding: 8px; min-width: 40px; min-height: 40px; font-size: 16px; }
+.mobile-bottom-bar .tool-btn.active { outline: 2px solid #2563eb; background: #0f1a2e; }
+.mobile-bottom-bar .label { min-width: 24px; text-align: center; color: #94a3b8; font-weight: 600; }
+.mobile-bottom-bar .divider { width: 1px; height: 28px; background: #1f2937; }
+.mobile-bottom-bar .color-chip { min-width: 40px; min-height: 40px; border-radius: 8px; border: 1px solid #1f2937; }
 
 .canvas-area { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
 .canvas-area .canvas-wrap { min-height: 0; }
@@ -69,9 +80,11 @@ body:not(.edit-mode) .main { grid-template-columns: 1fr; }
 .panel.collapsed .panel-body { display: none; }
 .canvas-surface { padding: 10px; overflow: auto; }
 .checker { background-image: linear-gradient(45deg,#111827 25%,transparent 25%),linear-gradient(-45deg,#111827 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#111827 75%),linear-gradient(-45deg,transparent 75%,#111827 75%); background-size: 20px 20px; background-position: 0 0,0 10px,10px -10px,-10px 0px; }
-.bg-white { background: white !important; }
-.bg-black { background: black !important; }
-.bg-gray { background: #374151 !important; }
+.bg-white { background: white !important; background-image: none !important; }
+.bg-black { background: black !important; background-image: none !important; }
+.bg-gray { background: #374151 !important; background-image: none !important; }
+/* Additional preset */
+.bg-lightgray { background: #9ca3af !important; background-image: none !important; }
 canvas { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; background: #0b1220; border: 1px solid #1f2937; border-radius: 6px; }
 .pixelated { image-rendering: pixelated; image-rendering: crisp-edges; }
 
@@ -125,6 +138,7 @@ body:not(.edit-mode) .canvas-area { grid-template-columns: 1fr 1fr; }
 .layer-eye { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 28px; height: 28px; display: grid; place-items: center; cursor: pointer; }
 .layer-eye::before { content: '👁️'; }
 .layer-item.is-hidden .layer-eye::before { content: '🚫'; }
+.layer-btn { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 28px; height: 28px; display: grid; place-items: center; cursor: pointer; }
 .edit-mode .normalize-only { display: none !important; }
 .edit-mode .canvas-area { grid-template-columns: 1fr; }
 .edit-mode #outputWrap { grid-column: 1 / -1; }
@@ -132,9 +146,26 @@ body:not(.edit-mode) .canvas-area { grid-template-columns: 1fr 1fr; }
 
 /* Color history */
 .color-history { display: inline-flex; gap: 6px; flex-wrap: wrap; }
-.color-history .swatch { width: 20px; height: 20px; border: 1px solid #1f2937; border-radius: 4px; cursor: pointer; }
+.color-history .swatch { width: 20px; height: 20px; border: 1px solid #1f2937; border-radius: 4px; cursor: pointer; position: relative; }
+.color-history .swatch.is-current { outline: 2px solid #22c55e; outline-offset: 2px; }
+.color-history .swatch.is-current.semi::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 6px);
+  pointer-events: none; border-radius: 4px;
+}
 /* In convert step, let top tools scroll and keep canvases fully visible */
 body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
+body:not(.edit-mode) #layersToggle, body:not(.edit-mode) #layersPopover { display: none !important; }
+/* Mobile layers modal */
+.layer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: grid; grid-template-rows: auto 1fr auto; }
+.layer-modal.hidden { display: none; }
+.layer-modal .layer-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--card); border-bottom: 1px solid #1f2937; }
+.layer-modal .layer-modal-footer { display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid #1f2937; }
+.layer-modal .layer-list.mobile { overflow: auto; padding: 8px; background: #0b1220; }
+.layer-list.mobile .layer-item { grid-template-columns: 56px 1fr auto auto; min-height: 64px; padding: 8px; }
+.layer-list.mobile .layer-name { font-size: 14px; }
+.layer-list.mobile .layer-eye, .layer-list.mobile .layer-btn { width: 34px; height: 34px; }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
@@ -161,4 +192,18 @@ body:not(.edit-mode) .topbar { max-height: 40vh; overflow: auto; }
   .bg-btn { padding: 1px 3px; font-size: 10px; min-width: 18px; height: 18px; }
   .bg-color-picker { width: 18px; height: 18px; }
   .workspace { gap: 6px; }
+
+  /* Mobile tool strip in canvas header */
+  .mobile-tools { display: none !important; }
+  .mobile-bottom-bar { display: flex; position: fixed; }
+  .workspace { gap: 6px; padding-bottom: 76px; }
 }
+
+/* Desktop: hide mobile-only strip */
+.mobile-tools { display: none; }
+body:not(.edit-mode) .mobile-bottom-bar { display: none !important; }
+/* Show header Layers button also on mobile (edit mode only) */
+
+/* Hide edit-only controls in convert step */
+body:not(.edit-mode) .mobile-tools { display: none !important; }
+body:not(.edit-mode) .bg-selector { display: none !important; }
