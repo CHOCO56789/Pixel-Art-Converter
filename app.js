@@ -7,6 +7,8 @@
   const methodSelect = document.getElementById('method');
   const qualityInput = document.getElementById('quality');
   const qualityLabel = document.getElementById('qualityLabel');
+  const qualityDecBtn = document.getElementById('qualityDec');
+  const qualityIncBtn = document.getElementById('qualityInc');
   const scaleXInput = document.getElementById('scaleX');
   const scaleYInput = document.getElementById('scaleY');
   const scaleXNum = document.getElementById('scaleXNum');
@@ -59,6 +61,14 @@
   const layersListMobileFull = document.getElementById('layersListMobileFull');
   const addLayerBtnMobile2 = document.getElementById('addLayerBtnMobile2');
   const removeLayerBtnMobile2 = document.getElementById('removeLayerBtnMobile2');
+  const aspectPreset = document.getElementById('aspectPreset');
+  const gridPresetList = document.getElementById('gridPresetList');
+  const gridAspectBadge = document.getElementById('gridAspectBadge');
+  const canvasArea = document.querySelector('.canvas-area');
+  const viewToggleBtn = document.getElementById('viewToggleBtn');
+  const viewToggleLabel = viewToggleBtn?.querySelector('.label') || null;
+  const viewTogglePath = viewToggleBtn?.querySelector('path') || null;
+  const mobileColorInputField = document.getElementById('mobileColorInput');
 
   // Background selector elements
   const previewSurface = document.getElementById('previewSurface');
@@ -469,6 +479,15 @@
   let lastGridW = parseInt(gridWInput.value || '32', 10) || 32;
   let lastGridH = parseInt(gridHInput.value || '32', 10) || 32;
   let hasPaint = false;
+  let sourceAspect = 1;
+  let currentGridPresets = [];
+  const VIEW_MODES = [
+    { id: 'stack', label: '縦並び', icon: 'M6 6h12v4H6zM6 14h12v4H6z' },
+    { id: 'split', label: '横並び', icon: 'M6 6h6v12H6zM12 6h6v12h-6z' },
+    { id: 'output', label: '出力のみ', icon: 'M6 6h12v12H6z' }
+  ];
+  let convertViewMode = canvasArea?.dataset.view || 'stack';
+  let currentViewIndex = Math.max(0, VIEW_MODES.findIndex(v => v.id === convertViewMode));
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -524,8 +543,28 @@
   // (removed) createCheckerPattern: CSS handles checker background
 
   function updateQualityLabel() {
-    qualityLabel.textContent = String(qualityInput.value);
+    if (!qualityLabel || !qualityInput) return;
+    const value = parseInt(qualityInput.value || qualityInput.min || '1', 10) || 1;
+    qualityLabel.textContent = String(value);
+    const min = parseInt(qualityInput.min || '1', 10) || 1;
+    const max = parseInt(qualityInput.max || '8', 10) || 8;
+    if (qualityDecBtn) qualityDecBtn.disabled = value <= min;
+    if (qualityIncBtn) qualityIncBtn.disabled = value >= max;
   }
+
+  function adjustQuality(delta) {
+    if (!qualityInput) return;
+    const min = parseInt(qualityInput.min || '1', 10) || 1;
+    const max = parseInt(qualityInput.max || '8', 10) || 8;
+    const current = parseInt(qualityInput.value || String(min), 10) || min;
+    const next = Math.max(min, Math.min(max, current + delta));
+    if (next === current) return;
+    qualityInput.value = String(next);
+    updateQualityLabel();
+    qualityInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  updateQualityLabel();
 
   // Offscreen composed view
   const compCanvas = document.createElement('canvas');
@@ -590,6 +629,109 @@
     }
   }
 
+  function applyViewModeToUI() {
+    if (!canvasArea) return;
+    const mode = VIEW_MODES[currentViewIndex] || VIEW_MODES[0];
+    canvasArea.dataset.view = mode.id;
+    if (viewToggleLabel) viewToggleLabel.textContent = mode.label;
+    if (viewTogglePath) viewTogglePath.setAttribute('d', mode.icon);
+  }
+
+  function setViewMode(mode) {
+    const idx = VIEW_MODES.findIndex(v => v.id === mode);
+    currentViewIndex = idx >= 0 ? idx : 0;
+    if (appMode === 'normalize') convertViewMode = VIEW_MODES[currentViewIndex].id;
+    applyViewModeToUI();
+  }
+
+  function cycleViewMode() {
+    currentViewIndex = (currentViewIndex + 1) % VIEW_MODES.length;
+    convertViewMode = VIEW_MODES[currentViewIndex].id;
+    applyViewModeToUI();
+  }
+
+  function updateAspectBadge() {
+    if (!gridWInput || !gridHInput) return;
+    const gw = Math.max(1, parseInt(gridWInput.value || '1', 10));
+    const gh = Math.max(1, parseInt(gridHInput.value || '1', 10));
+    const text = simplifyAspectFromWH(gw, gh);
+    if (gridAspect) gridAspect.value = text;
+    if (gridAspectBadge) gridAspectBadge.textContent = text;
+  }
+
+  function highlightGridPreset() {
+    if (!gridPresetList) return;
+    const gw = Math.max(1, parseInt(gridWInput.value || '0', 10));
+    const gh = Math.max(1, parseInt(gridHInput.value || '0', 10));
+    gridPresetList.querySelectorAll('button').forEach(btn => {
+      const bw = parseInt(btn.dataset.w || '0', 10);
+      const bh = parseInt(btn.dataset.h || '0', 10);
+      btn.classList.toggle('active', bw === gw && bh === gh);
+    });
+  }
+
+  function buildGridPresets(ratio) {
+    if (!gridPresetList) return;
+    currentGridPresets = [];
+    gridPresetList.innerHTML = '';
+    const r = (!isFinite(ratio) || ratio <= 0) ? 1 : ratio;
+    const longSides = [16, 24, 32, 48, 64, 96, 128, 160, 192, 224, 256];
+    const seen = new Set();
+    longSides.forEach(side => {
+      let w;
+      let h;
+      if (r >= 1) {
+        w = side;
+        h = Math.max(1, Math.round(side / r));
+      } else {
+        h = side;
+        w = Math.max(1, Math.round(side * r));
+      }
+      if (w > 256 || h > 256) return;
+      const key = `${w}x${h}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      currentGridPresets.push({ w, h });
+    });
+    if (currentGridPresets.length === 0) {
+      currentGridPresets.push({ w: 32, h: 32 });
+    }
+    currentGridPresets.forEach(preset => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.dataset.w = String(preset.w);
+      btn.dataset.h = String(preset.h);
+      btn.textContent = `${preset.w} × ${preset.h}`;
+      gridPresetList.appendChild(btn);
+    });
+    highlightGridPreset();
+  }
+
+  function applyPresetSelection(preference = 'nearest') {
+    if (!currentGridPresets.length) return;
+    let target = currentGridPresets[0];
+    if (preference === 'nearest') {
+      const currentW = Math.max(1, parseInt(gridWInput.value || '0', 10));
+      target = currentGridPresets.reduce((best, preset) => {
+        if (!best) return preset;
+        const diff = Math.abs(preset.w - currentW);
+        const bestDiff = Math.abs(best.w - currentW);
+        return diff < bestDiff ? preset : best;
+      }, currentGridPresets[0]);
+    }
+    gridWInput.value = String(target.w);
+    gridHInput.value = String(target.h);
+    updateAspectBadge();
+    highlightGridPreset();
+  }
+
+  function setAspectRatio(ratio) {
+    const approx = approximateAspect(ratio || 1);
+    const text = `${approx.w}:${approx.h}`;
+    if (gridAspect) gridAspect.value = text;
+    if (gridAspectBadge) gridAspectBadge.textContent = text;
+  }
+
   function syncOffsetRanges() {
     const LIM = 500; // Reduced from 10000 to 500 for better slider usability
     offsetXRange.min = String(-LIM);
@@ -611,6 +753,26 @@
     const v = parseFloat(s);
     if (!isNaN(v) && v > 0) return v;
     return null;
+  }
+
+  function approximateAspect(ratio) {
+    if (!isFinite(ratio) || ratio <= 0) return { w: 1, h: 1 };
+    let best = { w: 1, h: 1, err: Math.abs(ratio - 1) };
+    for (let h = 1; h <= 64; h++) {
+      const w = Math.max(1, Math.round(ratio * h));
+      const approx = w / h;
+      const err = Math.abs(approx - ratio);
+      if (err < best.err) best = { w, h, err };
+    }
+    return { w: best.w, h: best.h };
+  }
+
+  function simplifyAspectFromWH(w, h) {
+    const a = Math.max(1, Math.round(w));
+    const b = Math.max(1, Math.round(h));
+    const gcd = (x, y) => (y ? gcd(y, x % y) : x);
+    const g = gcd(a, b);
+    return `${Math.round(a / g)}:${Math.round(b / g)}`;
   }
 
   let adjustingGrid = false;
@@ -800,40 +962,48 @@
   }
 
   // Event wiring
-  fileInput.addEventListener('change', async (e) => {
-    console.log('File input changed');
-    const f = e.target.files && e.target.files[0];
-    if (!f) {
-      console.log('No file selected');
-      return;
-    }
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) {
+        fileInput.value = '';
+        return;
+      }
 
-    console.log('File selected:', f.name);
-    statusText.textContent = '画像を読み込み中...';
+      statusText.textContent = '画像を読み込み中...';
 
-    try {
-      img = await readImage(f);
-      console.log('Image loaded successfully');
+      try {
+        img = await readImage(f);
 
-      // Fit source into srcCanvas (keep original size for fidelity)
-      srcCanvas.width = img.naturalWidth;
-      srcCanvas.height = img.naturalHeight;
-      srcCtx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
-      srcCtx.drawImage(img, 0, 0);
+        // Fit source into srcCanvas (keep original size for fidelity)
+        srcCanvas.width = img.naturalWidth;
+        srcCanvas.height = img.naturalHeight;
+        srcCtx.clearRect(0, 0, srcCanvas.width, srcCanvas.height);
+        srcCtx.drawImage(img, 0, 0);
 
-      // Reset offsets
-      offsetXInput.value = '0';
-      offsetYInput.value = '0';
-      offsetXRange.value = '0';
-      offsetYRange.value = '0';
+        sourceAspect = img.naturalWidth / img.naturalHeight;
+        setAspectRatio(sourceAspect);
+        if (aspectPreset) aspectPreset.value = 'auto';
+        buildGridPresets(sourceAspect);
+        applyPresetSelection('nearest');
+        updateAspectBadge();
+        highlightGridPreset();
 
-      statusText.textContent = '画像を読み込みました';
-      render();
-    } catch (error) {
-      console.error('Error loading image:', error);
-      statusText.textContent = 'エラー: 画像の読み込みに失敗しました';
-    }
-  });
+        // Reset offsets
+        offsetXInput.value = '0';
+        offsetYInput.value = '0';
+        offsetXRange.value = '0';
+        offsetYRange.value = '0';
+
+        statusText.textContent = '画像を読み込みました';
+        render();
+      } catch (error) {
+        console.error('画像の読み込みに失敗しました', error);
+        statusText.textContent = 'エラー: 画像の読み込みに失敗しました';
+      }
+      fileInput.value = '';
+    });
+  }
 
   [gridWInput, gridHInput, methodSelect, qualityInput,
    scaleXInput, scaleYInput, scaleXNum, scaleYNum,
@@ -870,14 +1040,7 @@
           gridWInput.value = String(lastGridW);
           gridHInput.value = String(lastGridH);
         } else {
-          lastGridW = newW; lastGridH = newH;
-          hasPaint = false; baseUndo = []; baseRedo = [];
-          // resize base and all layers
-          baseCanvas.width = newW; baseCanvas.height = newH; baseCtx.clearRect(0,0,newW,newH);
-          layers.forEach(ly => { ly.canvas.width = newW; ly.canvas.height = newH; ly.ctx.clearRect(0,0,newW,newH); ly.undo = []; ly.redo = []; });
-          // keep current selection references
-          if (editingBase) { paintCanvas = baseCanvas; paintCtx = baseCtx; }
-          else if (layers[currentLayerIndex]) { paintCanvas = layers[currentLayerIndex].canvas; paintCtx = layers[currentLayerIndex].ctx; }
+          applyGridResize(newW, newH);
         }
       }
     }
@@ -894,12 +1057,39 @@
 
   // Grid aspect locking
   let adjustingGridFlag = false;
+
+  function applyGridResize(newW, newH) {
+    lastGridW = newW;
+    lastGridH = newH;
+    hasPaint = false;
+    baseUndo = [];
+    baseRedo = [];
+    baseCanvas.width = newW;
+    baseCanvas.height = newH;
+    baseCtx.clearRect(0, 0, newW, newH);
+    layers.forEach(ly => {
+      ly.canvas.width = newW;
+      ly.canvas.height = newH;
+      ly.ctx.clearRect(0, 0, newW, newH);
+      ly.undo = [];
+      ly.redo = [];
+    });
+    if (editingBase) {
+      paintCanvas = baseCanvas;
+      paintCtx = baseCtx;
+    } else if (layers[currentLayerIndex]) {
+      paintCanvas = layers[currentLayerIndex].canvas;
+      paintCtx = layers[currentLayerIndex].ctx;
+    }
+  }
   gridWInput.addEventListener('input', () => {
     if (adjustingGridFlag) return;
     adjustingGridFlag = true;
     applyGridLock('W');
     adjustingGridFlag = false;
     render();
+    updateAspectBadge();
+    highlightGridPreset();
   });
   gridHInput.addEventListener('input', () => {
     if (adjustingGridFlag) return;
@@ -907,26 +1097,98 @@
     applyGridLock('H');
     adjustingGridFlag = false;
     render();
+    updateAspectBadge();
+    highlightGridPreset();
   });
-  gridAspect.addEventListener('change', () => { applyGridLock('W'); render(); });
+  gridAspect.addEventListener('change', () => {
+    applyGridLock('W');
+    render();
+    updateAspectBadge();
+    highlightGridPreset();
+  });
+
+  if (gridLockAspect) {
+    gridLockAspect.addEventListener('change', () => {
+      if (gridLockAspect.checked) {
+        updateAspectBadge();
+        highlightGridPreset();
+      }
+    });
+  }
+
+  if (gridPresetList) {
+    gridPresetList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const w = parseInt(btn.dataset.w || '0', 10);
+      const h = parseInt(btn.dataset.h || '0', 10);
+      if (!w || !h) return;
+      if (appMode === 'edit' && (w !== lastGridW || h !== lastGridH)) {
+        const ok = confirm('グリッドサイズ（画像サイズ）を変更すると、ペイントはクリアされます。続行しますか？');
+        if (!ok) return;
+        applyGridResize(w, h);
+      }
+      gridWInput.value = String(w);
+      gridHInput.value = String(h);
+      updateAspectBadge();
+      highlightGridPreset();
+      render();
+    });
+  }
+
+  if (aspectPreset) {
+    aspectPreset.addEventListener('change', () => {
+      let ratio = sourceAspect;
+      if (aspectPreset.value && aspectPreset.value !== 'auto') {
+        ratio = parseAspect(aspectPreset.value) || ratio;
+      }
+      setAspectRatio(ratio);
+      buildGridPresets(ratio);
+      applyPresetSelection(aspectPreset.value === 'auto' ? 'nearest' : 'first');
+      highlightGridPreset();
+      render();
+    });
+  }
+
+  if (viewToggleBtn) {
+    viewToggleBtn.addEventListener('click', () => {
+      if (appMode !== 'normalize') return;
+      cycleViewMode();
+    });
+  }
 
   downloadBtn.addEventListener('click', exportPNG);
   undoBtn.addEventListener('click', undoPaint);
   redoBtn.addEventListener('click', redoPaint);
   clearPaintBtn.addEventListener('click', clearPaint);
-  if (openFileBtn) {
-    openFileBtn.addEventListener('click', () => {
-      console.log('Open file button clicked');
-      if (fileInput) {
-        console.log('File input found, triggering click');
-        fileInput.click();
+  function openImagePicker() {
+    if (!fileInput) {
+      statusText.textContent = 'エラー: ファイル入力が見つかりません';
+      return;
+    }
+    try {
+      if (typeof fileInput.showPicker === 'function') {
+        fileInput.showPicker();
       } else {
-        console.error('File input not found');
-        statusText.textContent = 'エラー: ファイル入力が見つかりません';
+        fileInput.click();
       }
+    } catch (err) {
+      fileInput.click();
+    }
+  }
+
+  if (openFileBtn) {
+    openFileBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      openImagePicker();
     });
-  } else {
-    console.error('Open file button not found');
+  }
+
+  if (qualityDecBtn) {
+    qualityDecBtn.addEventListener('click', () => adjustQuality(-1));
+  }
+  if (qualityIncBtn) {
+    qualityIncBtn.addEventListener('click', () => adjustQuality(1));
   }
   if (exportToggle && exportPopover) {
     exportToggle.addEventListener('click', (e) => {
@@ -979,7 +1241,24 @@
     brushSizeInput.value = String(v);
     updateMobileBrushUI();
   });
-  if (mobileColorBtn) mobileColorBtn.addEventListener('click', () => { if (colorInput) colorInput.click(); });
+  if (mobileColorBtn) {
+    mobileColorBtn.addEventListener('click', () => {
+      if (mobileColorInputField) {
+        mobileColorInputField.click();
+        return;
+      }
+      if (colorInput) colorInput.click();
+    });
+  }
+  if (mobileColorInputField) {
+    mobileColorInputField.addEventListener('input', () => {
+      const value = mobileColorInputField.value;
+      if (colorInput) {
+        colorInput.value = value;
+        colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
   if (layersToggleMobile && layersModal) layersToggleMobile.addEventListener('click', (e) => {
     e.stopPropagation();
     layersModal.classList.remove('hidden');
@@ -1042,6 +1321,8 @@
   function setMode(mode) {
     appMode = mode;
     if (mode === 'edit') {
+      convertViewMode = VIEW_MODES[currentViewIndex]?.id || convertViewMode;
+      setViewMode('output');
       lastGridW = parseInt(gridWInput.value || '32', 10) || 32;
       lastGridH = parseInt(gridHInput.value || '32', 10) || 32;
       // 初回はベースを編集対象にして、消しゴムなどが効くように
@@ -1052,6 +1333,9 @@
       }
       syncToolButtons();
       compositeOutput();
+    }
+    if (mode === 'normalize') {
+      setViewMode(convertViewMode);
     }
     updateModeUI();
     if (mode === 'normalize') {
@@ -1086,7 +1370,11 @@
     });
   }
   if (colorInput) {
-    colorInput.addEventListener('input', () => { updateCurrentColorIndicator(); updateMobileColorChip(); });
+    colorInput.addEventListener('input', () => {
+      if (mobileColorInputField) mobileColorInputField.value = colorInput.value;
+      updateCurrentColorIndicator();
+      updateMobileColorChip();
+    });
   }
   if (alphaInput) {
     alphaInput.addEventListener('input', () => { updateCurrentColorIndicator(); updateMobileColorChip(); });
@@ -1154,12 +1442,10 @@
     const gw = outputCanvas?.width || 0;
     const gh = outputCanvas?.height || 0;
     const tool = toolSelect?.value || '-';
-    const mode = appMode === 'edit' ? '編集' : '変換';
     const target = editingBase ? 'ベース' : `レイヤー${currentLayerIndex+1}`;
     const col = colorInput?.value || '#000000';
     const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
-    const gridOn = showGrid ? (showGrid.checked ? 'ON' : 'OFF') : 'ON';
-    statusText.textContent = `モード: ${mode} | ツール: ${tool} | 対象: ${target} | グリッド: ${gw}x${gh} | 色: ${col} / α:${a} | プレビュー格子:${gridOn}`;
+    statusText.textContent = 'ツール: ' + tool + ' | グリッド: ' + gw + '×' + gh + ' | 対象: ' + target + ' | 色: ' + col + ' / α:' + a;
   }
 
   // Removed legacy stepper handlers (buttons not present in UI)
@@ -1167,6 +1453,10 @@
   // Init
   updateQualityLabel();
   updateModeUI();
+  updateAspectBadge();
+  buildGridPresets(parseAspect(gridAspect?.value) || 1);
+  highlightGridPreset();
+  applyViewModeToUI();
   // sync numeric to ranges initial
   scaleXNum.value = scaleXInput.value;
   scaleYNum.value = scaleYInput.value;
@@ -1182,6 +1472,7 @@
   // Init mobile UI indicators
   updateMobileBrushUI();
   updateMobileColorChip();
+  if (mobileColorInputField && colorInput) mobileColorInputField.value = colorInput.value;
 
   // Grid visibility toggle
   if (showGrid) {
