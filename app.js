@@ -78,6 +78,23 @@
   const LAYER_VISIBLE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s4.2-6.5 9.5-6.5 9.5 6.5 9.5 6.5-4.2 6.5-9.5 6.5S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
   const LAYER_HIDDEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5.7C3.1 7.4 2 9.2 2 9.2s4.2 6.5 9.5 6.5c1.4 0 2.8-.3 4-.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 7.5c2.5 0 4.8 1.5 6.5 3 1 .9 1.8 1.9 2.5 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  const LAYER_DUP_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="5" y="5" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  const LAYER_MERGE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.5 11.5L12 15l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 18h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (event) => {
+    const target = event.target;
+    if (target && (target.closest('input, textarea') || target.closest('[contenteditable]'))) {
+      lastTouchEnd = Date.now();
+      return;
+    }
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+
   function updateLayerEyeButton(btn, visible) {
     if (!btn) return;
     btn.innerHTML = visible ? LAYER_VISIBLE_ICON : LAYER_HIDDEN_ICON;
@@ -438,8 +455,18 @@
         const nameEl = document.createElement('div'); nameEl.className = 'layer-name';
         const tagsEl = document.createElement('div'); tagsEl.className = 'layer-tags';
         const eye = document.createElement('button'); eye.className = 'layer-eye'; eye.type = 'button';
-        const dup = document.createElement('button'); dup.type = 'button'; dup.className = 'layer-btn'; dup.title = '複製'; dup.textContent = '⧉';
-        const merge = document.createElement('button'); merge.type = 'button'; merge.className = 'layer-btn'; merge.title = '下と結合'; merge.textContent = '⇩';
+        const dup = document.createElement('button');
+        dup.type = 'button';
+        dup.className = 'layer-btn';
+        dup.title = '複製';
+        dup.setAttribute('aria-label', 'レイヤーを複製');
+        dup.innerHTML = LAYER_DUP_ICON;
+        const merge = document.createElement('button');
+        merge.type = 'button';
+        merge.className = 'layer-btn';
+        merge.title = '下と統合';
+        merge.setAttribute('aria-label', '下のレイヤーと統合');
+        merge.innerHTML = LAYER_MERGE_ICON;
 
         if (it.type === 'base') {
           nameEl.textContent = 'ベース'; tagsEl.textContent = '変換結果';
@@ -488,6 +515,11 @@
             e.stopPropagation();
             const targetIndex = it.index - 1;
             const src = layers[it.index];
+            const srcName = ly.name || `レイヤー ${it.index+1}`;
+            const destLayer = targetIndex >= 0 ? layers[targetIndex] : null;
+            const destName = destLayer ? (destLayer.name || `レイヤー ${targetIndex+1}`) : 'ベース';
+            const ok = confirm(`${srcName} を ${destName} と統合します。よろしいですか？`);
+            if (!ok) return;
             if (targetIndex >= 0) {
               const dst = layers[targetIndex];
               dst.ctx.drawImage(src.canvas, 0, 0);

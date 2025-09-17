@@ -395,8 +395,10 @@
           </svg>
         </button>
         <div class="divider"></div>
-        <button id="mobileColorBtn" type="button" title="色を選択" class="color-chip"></button>
-        <input type="color" id="mobileColorInput" class="visually-hidden" />
+        <div class="mobile-color-picker">
+          <button id="mobileColorBtn" type="button" title="色を選択" aria-label="色を選択" class="color-chip"></button>
+          <input type="color" id="mobileColorInput" aria-label="色を選択" />
+        </div>
         <button id="layersToggleMobile" class="ghost compact" type="button" title="レイヤー">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 8l8-4 8 4-8 4-8-4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
@@ -415,14 +417,20 @@
       </button>
 
       <div id="layersModal" class="layer-modal hidden" aria-modal="true" role="dialog">
-        <div class="layer-modal-header">
-          <div class="title">レイヤー</div>
-          <button id="closeLayersModal" class="ghost" type="button">閉じる</button>
-        </div>
-        <div id="layersListMobileFull" class="layer-list mobile"></div>
-        <div class="layer-modal-footer">
-          <button type="button" id="addLayerBtnMobile2">追加</button>
-          <button type="button" id="removeLayerBtnMobile2">削除</button>
+        <div class="layer-modal-panel" role="document">
+          <div class="layer-modal-header">
+            <div class="title">レイヤー</div>
+          </div>
+          <div class="layer-modal-body">
+            <div id="layersListMobileFull" class="layer-list mobile"></div>
+          </div>
+          <div class="layer-modal-footer">
+            <div class="layer-modal-actions">
+              <button type="button" id="addLayerBtnMobile2">追加</button>
+              <button type="button" id="removeLayerBtnMobile2">削除</button>
+            </div>
+            <button id="closeLayersModal" class="ghost" type="button">閉じる</button>
+          </div>
         </div>
       </div>
     </div>
