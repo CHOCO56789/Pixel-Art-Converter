@@ -76,6 +76,16 @@
   let canvasBgColor = null; // Custom background color
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
+  const LAYER_VISIBLE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s4.2-6.5 9.5-6.5 9.5 6.5 9.5 6.5-4.2 6.5-9.5 6.5S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  const LAYER_HIDDEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5.7C3.1 7.4 2 9.2 2 9.2s4.2 6.5 9.5 6.5c1.4 0 2.8-.3 4-.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 7.5c2.5 0 4.8 1.5 6.5 3 1 .9 1.8 1.9 2.5 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function updateLayerEyeButton(btn, visible) {
+    if (!btn) return;
+    btn.innerHTML = visible ? LAYER_VISIBLE_ICON : LAYER_HIDDEN_ICON;
+    const label = visible ? '表示' : '非表示';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+  }
   
   function updateMobileBrushUI() {
     if (mobileBrushSize && brushSizeInput) mobileBrushSize.textContent = String(brushSizeInput.value || '1');
@@ -356,6 +366,30 @@
     applyCanvasTransform();
   }
 
+  function fitPreviewCanvas(viewBox) {
+    if (!previewCanvas) return;
+    const target = viewBox || lastViewBox;
+    if (!target) return;
+    const surface = previewSurface || previewCanvas.parentElement;
+    if (!surface) return;
+    const rect = surface.getBoundingClientRect();
+    const availW = Math.max(1, rect.width - 16);
+    const availH = Math.max(1, rect.height - 16);
+    const vw = Math.max(1, target.vw || previewCanvas.width || 1);
+    const vh = Math.max(1, target.vh || previewCanvas.height || 1);
+    const ratio = vw / vh;
+    let cssW = availW;
+    let cssH = cssW / ratio;
+    if (cssH > availH) {
+      cssH = availH;
+      cssW = cssH * ratio;
+    }
+    cssW = Math.max(32, Math.round(cssW));
+    cssH = Math.max(32, Math.round(cssH));
+    previewCanvas.style.width = cssW + 'px';
+    previewCanvas.style.height = cssH + 'px';
+  }
+
   function selectBaseForEditing() {
     editingBase = true;
     paintCanvas = baseCanvas;
@@ -383,7 +417,7 @@
         el.className = 'layer-item';
         if (it.type === 'layer') { el.setAttribute('draggable', 'true'); el.dataset.index = String(it.index); }
         const thumb = document.createElement('div'); thumb.className = 'layer-thumb';
-        const t = document.createElement('canvas'); t.width = 56; t.height = 56; const tctx = t.getContext('2d'); tctx.imageSmoothingEnabled = false;
+        const t = document.createElement('canvas'); t.width = 48; t.height = 48; const tctx = t.getContext('2d'); tctx.imageSmoothingEnabled = false;
         const meta = document.createElement('div'); meta.className = 'layer-meta';
         const nameEl = document.createElement('div'); nameEl.className = 'layer-name';
         const tagsEl = document.createElement('div'); tagsEl.className = 'layer-tags';
@@ -395,16 +429,28 @@
           nameEl.textContent = 'ベース'; tagsEl.textContent = '変換結果';
           if (baseVisible === false) el.classList.add('is-hidden');
           if (editingBase) el.classList.add('selected');
-          if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, 56, 56);
-          eye.addEventListener('click', (e) => { e.stopPropagation(); baseVisible = !baseVisible; compositeOutput(); });
+          if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, 48, 48);
+          updateLayerEyeButton(eye, baseVisible !== false);
+          eye.addEventListener('click', (e) => {
+            e.stopPropagation();
+            baseVisible = !baseVisible;
+            updateLayerEyeButton(eye, baseVisible !== false);
+            compositeOutput();
+          });
           el.addEventListener('click', () => { selectBaseForEditing(); compositeOutput(); updateStatus(); });
         } else {
           const ly = layers[it.index];
           nameEl.textContent = ly.name || `Layer ${it.index+1}`; tagsEl.textContent = '編集レイヤー';
           if (ly.visible === false) el.classList.add('is-hidden');
           if (!editingBase && currentLayerIndex === it.index) el.classList.add('selected');
-          if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, 56, 56);
-          eye.addEventListener('click', (e) => { e.stopPropagation(); ly.visible = (ly.visible === false) ? true : false; compositeOutput(); });
+          if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, 48, 48);
+          updateLayerEyeButton(eye, ly.visible !== false);
+          eye.addEventListener('click', (e) => {
+            e.stopPropagation();
+            ly.visible = (ly.visible === false) ? true : false;
+            updateLayerEyeButton(eye, ly.visible !== false);
+            compositeOutput();
+          });
           el.addEventListener('click', () => { selectLayerForEditing(it.index); if (layerSelect) layerSelect.value = String(it.index); compositeOutput(); updateStatus(); });
           nameEl.addEventListener('dblclick', (e) => {
             e.stopPropagation();
@@ -479,6 +525,7 @@
   let hasPaint = false;
   let sourceAspect = 1;
   let currentGridPresets = [];
+  let lastViewBox = null;
   const VIEW_MODES = [
     { id: 'stack', label: '縦並び', icon: 'M6 6h12v4H6zM6 14h12v4H6z' },
     { id: 'split', label: '横並び', icon: 'M6 6h6v12H6zM12 6h6v12h-6z' },
@@ -605,6 +652,7 @@
       }
       previewCtx.restore();
     }
+    fitPreviewCanvas(view);
   }
 
   function applyViewModeToUI() {
@@ -613,6 +661,7 @@
     canvasArea.dataset.view = mode.id;
     if (viewToggleLabel) viewToggleLabel.textContent = mode.label;
     if (viewTogglePath) viewTogglePath.setAttribute('d', mode.icon);
+    fitPreviewCanvas();
   }
 
   function setViewMode(mode) {
@@ -907,6 +956,7 @@
     if (!img) return;
     const view = getViewBox();
     if (!view) return;
+    lastViewBox = view;
     // プレビューは常時描画（編集モードでも）
     drawPreview(view);
     // ベースの再生成は変換モードのみ
@@ -1209,10 +1259,14 @@
   if (mobileColorBtn) {
     mobileColorBtn.addEventListener('click', () => {
       if (mobileColorInputField) {
-        mobileColorInputField.click();
-        return;
+        if (typeof mobileColorInputField.showPicker === 'function') {
+          mobileColorInputField.showPicker();
+        } else {
+          mobileColorInputField.click();
+        }
+      } else if (colorInput) {
+        colorInput.click();
       }
-      if (colorInput) colorInput.click();
     });
   }
   if (mobileColorInputField) {
@@ -1290,8 +1344,13 @@
       setViewMode('output');
       lastGridW = parseInt(gridWInput.value || '32', 10) || 32;
       lastGridH = parseInt(gridHInput.value || '32', 10) || 32;
-      // 初回はベースを編集対象にして、消しゴムなどが効くように
-      selectBaseForEditing();
+      // 初期はユーザー用レイヤーから編集を始める
+      if (layers.length > 0) {
+        selectLayerForEditing(0);
+        if (layerSelect) layerSelect.value = '0';
+      } else {
+        selectBaseForEditing();
+      }
       if (toolSelect) {
         toolSelect.value = 'pen';
         toolSelect.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1743,11 +1802,16 @@
     outputCanvas.addEventListener('mouseleave', () => updateStatus());
   }
 
-  // Resize handling to keep integer pixel scaling
-  window.addEventListener('resize', fitOutputCanvas);
-  if (window.ResizeObserver && outputSurface) {
-    const ro = new ResizeObserver(() => fitOutputCanvas());
-    ro.observe(outputSurface);
+  // Resize handling to keep canvases scaled nicely
+  const handleSurfaceResize = () => {
+    fitOutputCanvas();
+    fitPreviewCanvas();
+  };
+  window.addEventListener('resize', handleSurfaceResize);
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => handleSurfaceResize());
+    if (outputSurface) ro.observe(outputSurface);
+    if (previewSurface) ro.observe(previewSurface);
   }
 
   // Collapsible panels (export, palette etc.)
@@ -1814,9 +1878,13 @@
     });
 
     // Redraw both canvases
-    if (img && getViewBox()) {
-      drawPreview(getViewBox());
-      compositeOutput();
+    if (img) {
+      const view = getViewBox();
+      if (view) {
+        lastViewBox = view;
+        drawPreview(view);
+        compositeOutput();
+      }
     }
   }
 
