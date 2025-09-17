@@ -117,6 +117,32 @@ button { background: var(--accent); border: none; color: #09310e; padding: 8px 1
 .ghost { background: transparent; color: #94a3b8; border: 1px solid #1f2937; }
 .primary { background: #2563eb; color: #e5e7eb; }
 .num { width: 88px; }
+.floating-add-btn {
+  position: fixed;
+  right: 24px;
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  background: #2563eb;
+  color: #e5e7eb;
+  border-radius: 999px;
+  padding: 12px 20px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  z-index: 150;
+}
+.floating-add-btn::before {
+  content: '+';
+  font-size: 16px;
+}
+.floating-add-btn:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.6);
+  outline-offset: 4px;
+}
+.floating-add-btn:hover {
+  background: #1d4ed8;
+}
 .stepper button { padding: 4px 8px; margin-left: 4px; background: #374151; color: #e5e7eb; border-radius: 6px; border: 1px solid #1f2937; }
 .stepper button:hover { background: #4b5563; }
 
@@ -205,6 +231,12 @@ body:not(.edit-mode) #layersToggle, body:not(.edit-mode) #layersPopover { displa
   .mobile-tools { display: none !important; }
   .mobile-bottom-bar { display: flex; position: fixed; }
   .workspace { gap: 6px; padding-bottom: 76px; }
+  .floating-add-btn {
+    right: 16px;
+    bottom: calc(128px + env(safe-area-inset-bottom));
+    padding: 12px 18px;
+    font-size: 13px;
+  }
 }
 
 /* Desktop: hide mobile-only strip */
