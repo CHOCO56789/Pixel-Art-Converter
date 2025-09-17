@@ -11,8 +11,13 @@
       <div class="titlebar">
         <div class="title">Pixel Art Converter</div>
         <div class="title-actions">
-          <button id="openFileBtn" class="ghost">画像を開く</button>
-          <button id="exportToggle" class="ghost">書き出し</button>
+          <button id="exportToggle" class="ghost compact" type="button" title="書き出し">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 16V4m0 0l4 4m-4-4L8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              <rect x="4" y="14" width="16" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="visually-hidden">書き出し</span>
+          </button>
           <div id="exportPopover" class="popover hidden">
             <div class="popover-title">書き出し設定</div>
             <label>倍率 <input type="number" id="exportScale" min="1" max="64" step="1" value="1" class="num"></label>
@@ -26,25 +31,84 @@
         <aside class="sidebar">
           <div class="tool-group paint-only">
             <div class="tool-title">ツール</div>
-            <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
-            <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
-            <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
-            <button class="tool-btn" data-tool="line" title="直線">📏</button>
-            <button class="tool-btn" data-tool="rect" title="矩形">▭</button>
-            <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
-            <button class="tool-btn" data-tool="move" title="移動">✋</button>
+            <button class="tool-btn" data-tool="pen" type="button" title="ペン">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 16.5V20h3.5L17 10.5l-3.5-3.5L4 16.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.5 7l2.5-2.5a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L17.5 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">ペン</span>
+            </button>
+            <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">消しゴム</span>
+            </button>
+            <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">スポイト</span>
+            </button>
+            <button class="tool-btn" data-tool="line" type="button" title="直線">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 18L18 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+              <span class="visually-hidden">直線</span>
+            </button>
+            <button class="tool-btn" data-tool="rect" type="button" title="矩形">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="5" width="14" height="14" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+              </svg>
+              <span class="visually-hidden">矩形</span>
+            </button>
+            <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+              </svg>
+              <span class="visually-hidden">塗りつぶし</span>
+            </button>
+            <button class="tool-btn" data-tool="move" type="button" title="移動">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 4v16m0-16l-2.5 2.5M12 4l2.5 2.5M12 20l-2.5-2.5M12 20l2.5-2.5M4 12h16M4 12l2.5-2.5M4 12l2.5 2.5M20 12l-2.5-2.5M20 12l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">移動</span>
+            </button>
           </div>
 
           <div class="tool-group paint-only">
             <div class="tool-title">編集</div>
-            <button type="button" id="undoBtn" title="Undo">↶</button>
-            <button type="button" id="redoBtn" title="Redo">↷</button>
-            <button type="button" id="clearPaintBtn" title="レイヤークリア">✕</button>
+            <button type="button" id="undoBtn" class="ghost compact" title="元に戻す">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 11L3 7l4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M4 7h8.5a6.5 6.5 0 110 13H8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">元に戻す</span>
+            </button>
+            <button type="button" id="redoBtn" class="ghost compact" title="やり直す">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17 11l4-4-4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M20 7h-8.5a6.5 6.5 0 100 13H16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">やり直す</span>
+            </button>
+            <button type="button" id="clearPaintBtn" class="ghost compact" title="レイヤーをクリア">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                <path d="M9 7V5h6v2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M8 7v11a1 1 0 001 1h6a1 1 0 001-1V7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="visually-hidden">クリア</span>
+            </button>
           </div>
 
           <div class="tool-group paint-only">
             <div class="tool-title">カラー</div>
-            <input type="color" id="color" value="#ff4d4d"/>
+            <input type="color" id="color" value="#ff4d4d" />
             <label class="mini">不透明度 <input type="range" id="alpha" min="0" max="255" value="255"></label>
           </div>
 
@@ -57,7 +121,6 @@
               </select>
             </label>
             <label class="mini">サイズ <input type="number" id="brushSize" min="1" max="16" value="1" class="num"></label>
-            <!-- 保持のための隠しセレクト -->
             <select id="tool" class="visually-hidden">
               <option value="pen" selected>ペン</option>
               <option value="eraser">消しゴム</option>
@@ -73,76 +136,124 @@
         <section class="workspace">
           <div class="mode-bar">
             <div class="mode-steps">
-              <div class="step" data-step="convert">1 変換</div>
+              <div class="step" data-step="convert">変換</div>
               <div class="arrow">→</div>
-              <div class="step" data-step="edit">2 編集</div>
+              <div class="step" data-step="edit">編集</div>
               <div class="spacer"></div>
-              <button id="backToConvertBtn" class="ghost hidden">変換に戻る</button>
-              <button id="finalizeBtn" class="primary">編集に進む</button>
+              <button id="viewToggleBtn" class="ghost compact" type="button" title="表示モード切替">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 6h6v6H5zM13 6h6v6h-6zM5 14h14v4H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                </svg>
+                <span class="label">縦並び</span>
+              </button>
+              <button id="backToConvertBtn" class="ghost hidden" type="button">戻る</button>
+              <button id="finalizeBtn" class="primary" type="button">編集に進む</button>
             </div>
           </div>
 
           <div class="topbar">
-            <div class="group normalize-only">
-              <div class="group-title">変換方法</div>
-              <div class="row">
-                <label>色の決め方
+            <div class="control-card normalize-only">
+              <div class="card-header">
+                <span class="card-title">色抽出</span>
+              </div>
+              <div class="card-body">
+                <label class="field">
+                  <span>モード</span>
                   <select id="method">
-                    <option value="mode">最頻色（ブロック内で最も多い色）</option>
-                    <option value="center" selected>中心（ブロック中心の色）</option>
-                    <option value="average">平均（ブロック平均色）</option>
+                    <option value="mode">最頻色</option>
+                    <option value="center" selected>中心色</option>
+                    <option value="average">平均色</option>
                   </select>
                 </label>
-                <label>サンプリング密度 <input type="range" id="quality" min="1" max="8" value="3"> <span id="qualityLabel">3</span></label>
+                <label class="field">
+                  <span>サンプリング</span>
+                  <div class="range-field">
+                    <input type="range" id="quality" min="1" max="8" value="3">
+                    <span id="qualityLabel" class="range-value">3</span>
+                  </div>
+                </label>
               </div>
             </div>
 
-            <div class="group normalize-only">
-              <div class="group-title">グリッド設定（出力サイズ）</div>
-              <div class="row">
-                <label>W <input type="number" id="gridW" min="1" max="256" value="32" class="num"></label>
-                <label>H <input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
-                <label><input type="checkbox" id="gridLockAspect" checked> 比率を固定</label>
-                <label>比率（W:H）<input type="text" id="gridAspect" value="1:1" class="num" placeholder="1:1"></label>
-                <label><input type="checkbox" id="showGrid" checked> グリッドを表示</label>
+            <div class="control-card normalize-only">
+              <div class="card-header">
+                <span class="card-title">出力サイズ</span>
+                <div class="aspect-chip" id="gridAspectBadge">1:1</div>
+              </div>
+              <div class="card-body">
+                <label class="field">
+                  <span>比率プリセット</span>
+                  <select id="aspectPreset">
+                    <option value="auto">元画像</option>
+                    <option value="1:1">1:1</option>
+                    <option value="4:3">4:3</option>
+                    <option value="3:4">3:4</option>
+                    <option value="16:9">16:9</option>
+                    <option value="9:16">9:16</option>
+                  </select>
+                </label>
+                <div class="preset-row" id="gridPresetList" role="group" aria-label="グリッドプリセット"></div>
+                <div class="field-row">
+                  <label>幅 <input type="number" id="gridW" min="1" max="256" value="32" class="num"></label>
+                  <label>高さ <input type="number" id="gridH" min="1" max="256" value="32" class="num"></label>
+                  <label class="switch"><input type="checkbox" id="gridLockAspect" checked> 比率固定</label>
+                  <label class="switch"><input type="checkbox" id="showGrid" checked> グリッド</label>
+                </div>
+                <input type="hidden" id="gridAspect" value="1:1">
               </div>
             </div>
 
-            <div class="group normalize-only">
-              <div class="group-title">拡大縮小</div>
-              <div class="row">
-                <label>X
-                  <input type="range" id="scaleX" min="0.1" max="2" step="0.1" value="1">
-                  <input type="number" id="scaleXNum" min="0.1" max="2" step="0.1" value="1" class="num">
+            <div class="control-card normalize-only">
+              <div class="card-header">
+                <span class="card-title">リサイズ</span>
+              </div>
+              <div class="card-body">
+                <label class="field compact">
+                  <span>X倍率</span>
+                  <div class="range-field">
+                    <input type="range" id="scaleX" min="0.1" max="2" step="0.1" value="1">
+                    <input type="number" id="scaleXNum" min="0.1" max="2" step="0.1" value="1" class="num">
+                  </div>
                 </label>
-                <label>Y
-                  <input type="range" id="scaleY" min="0.1" max="2" step="0.1" value="1">
-                  <input type="number" id="scaleYNum" min="0.1" max="2" step="0.1" value="1" class="num">
+                <label class="field compact">
+                  <span>Y倍率</span>
+                  <div class="range-field">
+                    <input type="range" id="scaleY" min="0.1" max="2" step="0.1" value="1">
+                    <input type="number" id="scaleYNum" min="0.1" max="2" step="0.1" value="1" class="num">
+                  </div>
                 </label>
-                <label><input type="checkbox" id="lockAspect" checked> 縦横比を固定</label>
+                <label class="switch"><input type="checkbox" id="lockAspect" checked> 縦横比を固定</label>
               </div>
             </div>
 
-            <div class="group normalize-only">
-              <div class="group-title">位置調整</div>
-              <div class="row">
-                <label>X
-                  <input type="range" id="offsetXRange" min="0" max="0" step="1" value="0">
-                  <input type="number" id="offsetX" value="0" class="num">
+            <div class="control-card normalize-only">
+              <div class="card-header">
+                <span class="card-title">位置</span>
+              </div>
+              <div class="card-body">
+                <label class="field compact">
+                  <span>X</span>
+                  <div class="range-field">
+                    <input type="range" id="offsetXRange" min="0" max="0" step="1" value="0">
+                    <input type="number" id="offsetX" value="0" class="num">
+                  </div>
                 </label>
-                <label>Y
-                  <input type="range" id="offsetYRange" min="0" max="0" step="1" value="0">
-                  <input type="number" id="offsetY" value="0" class="num">
+                <label class="field compact">
+                  <span>Y</span>
+                  <div class="range-field">
+                    <input type="range" id="offsetYRange" min="0" max="0" step="1" value="0">
+                    <input type="number" id="offsetY" value="0" class="num">
+                  </div>
                 </label>
-                <div class="hint">プレビュー上をドラッグしても位置を動かせます</div>
+                <div class="hint">プレビュー上をドラッグしても移動できます</div>
               </div>
             </div>
           </div>
 
-          <div class="canvas-area">
+          <div class="canvas-area" data-view="stack">
             <div class="canvas-wrap" id="previewWrap">
               <div class="panel-header">
-                <span>元画像（ビュー）＋グリッド</span>
+                <span>元画像プレビュー</span>
               </div>
               <div class="canvas-surface checker" id="previewSurface"><canvas id="previewCanvas" width="512" height="512"></canvas></div>
             </div>
@@ -150,14 +261,46 @@
               <div class="panel-header">
                 <span>ピクセル編集</span>
                 <div class="mobile-tools" aria-label="ツール(モバイル)">
-                  <!-- よく使う順に整理: ペン/消しゴム/塗り/スポイト/直線/矩形/移動 -->
-                  <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
-                  <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
-                  <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
-                  <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
-                  <button class="tool-btn" data-tool="line" title="直線">📏</button>
-                  <button class="tool-btn" data-tool="rect" title="矩形">▭</button>
-                  <button class="tool-btn" data-tool="move" title="移動">✋</button>
+                  <button class="tool-btn" data-tool="pen" type="button" title="ペン">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 16.5V20h3.5L17 10.5l-3.5-3.5L4 16.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M14.5 7l2.5-2.5a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L17.5 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                      <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="line" type="button" title="直線">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M6 18L18 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="rect" type="button" title="矩形">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="5" y="5" width="14" height="14" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.7" />
+                    </svg>
+                  </button>
+                  <button class="tool-btn" data-tool="move" type="button" title="移動">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 4v16m0-16l-2.5 2.5M12 4l2.5 2.5M12 20l-2.5-2.5M12 20l2.5-2.5M4 12h16M4 12l2.5-2.5M4 12l2.5 2.5M20 12l-2.5-2.5M20 12l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </button>
                 </div>
                 <div class="bg-selector" aria-label="背景色">
                   <button class="bg-btn" data-bg="checker" title="チェッカー(透明)">▦</button>
@@ -167,7 +310,13 @@
                   <button class="bg-btn" data-bg="gray" title="濃灰">▨</button>
                   <input type="color" id="bgColorPicker" class="bg-color-picker" title="カスタム色">
                 </div>
-                <button id="layersToggle" class="ghost" title="レイヤー">レイヤー</button>
+                <button id="layersToggle" class="ghost compact" type="button" title="レイヤー">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 8l8-4 8 4-8 4-8-4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                    <path d="M4 12l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                  </svg>
+                  <span class="visually-hidden">レイヤー</span>
+                </button>
               </div>
               <div class="canvas-surface checker" id="outputSurface"><canvas id="outputCanvas" width="32" height="32" class="pixelated"></canvas></div>
               <div id="layersPopover" class="popover hidden">
@@ -205,36 +354,88 @@
               <div id="colorHistory" class="color-history"></div>
             </div>
           </div>
-
-          
         </aside>
       </div>
 
       <div class="statusbar">
         <div id="statusText">準備完了</div>
       </div>
-      <!-- Mobile bottom toolbar (edit mode) -->
+
       <div class="mobile-bottom-bar" aria-label="モバイル操作">
-        <button id="mobileUndo" title="元に戻す">↶</button>
-        <button id="mobileRedo" title="やり直す">↷</button>
+        <button id="mobileUndo" type="button" title="元に戻す">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 11L3 7l4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M4 7h8.5a6.5 6.5 0 110 13H8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button id="mobileRedo" type="button" title="やり直す">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17 11l4-4-4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M20 7h-8.5a6.5 6.5 0 100 13H16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
         <div class="divider"></div>
-        <button class="tool-btn" data-tool="pen" title="ペン">🖊️</button>
-        <button class="tool-btn" data-tool="eraser" title="消しゴム">🧽</button>
-        <button class="tool-btn" data-tool="fill" title="塗りつぶし">🪣</button>
-        <button class="tool-btn" data-tool="picker" title="スポイト">🎯</button>
+        <button class="tool-btn" data-tool="pen" type="button" title="ペン">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 16.5V20h3.5L17 10.5l-3.5-3.5L4 16.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.5 7l2.5-2.5a2 2 0 012.8 0l.2.2a2 2 0 010 2.8L17.5 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+          </svg>
+        </button>
+        <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
         <div class="divider"></div>
-        <button id="mobileBrushDec" title="ブラシ縮小">－</button>
+        <button id="mobileBrushDec" type="button" title="ブラシ縮小">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
         <span id="mobileBrushSize" class="label">1</span>
-        <button id="mobileBrushInc" title="ブラシ拡大">＋</button>
+        <button id="mobileBrushInc" type="button" title="ブラシ拡大">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
         <div class="divider"></div>
-        <button id="mobileColorBtn" title="色を選択" class="color-chip"></button>
-        <button id="layersToggleMobile" class="ghost" title="レイヤー">レイヤー</button>
+        <button id="mobileColorBtn" type="button" title="色を選択" class="color-chip"></button>
+        <input type="color" id="mobileColorInput" class="visually-hidden" />
+        <button id="layersToggleMobile" class="ghost compact" type="button" title="レイヤー">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 8l8-4 8 4-8 4-8-4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M4 12l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+        </button>
       </div>
-      <!-- Mobile full-screen Layers modal -->
+
+      <button id="openFileBtn" class="floating-open" type="button" title="画像を開く">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 19h14a1 1 0 001-1v-6a1 1 0 00-1-1h-4l-2-3H5a1 1 0 00-1 1v9a1 1 0 001 1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M12 11v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M9 14h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <span class="visually-hidden">画像を開く</span>
+      </button>
+
       <div id="layersModal" class="layer-modal hidden" aria-modal="true" role="dialog">
         <div class="layer-modal-header">
           <div class="title">レイヤー</div>
-          <button id="closeLayersModal" class="ghost">閉じる</button>
+          <button id="closeLayersModal" class="ghost" type="button">閉じる</button>
         </div>
         <div id="layersListMobileFull" class="layer-list mobile"></div>
         <div class="layer-modal-footer">
@@ -246,4 +447,4 @@
 
     <script src="app.js"></script>
   </body>
-  </html>
+</html>
