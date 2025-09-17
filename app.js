@@ -1472,7 +1472,6 @@
   let lastOutputSize = { w: 0, h: 0 };
   const MIN_TOUCH_SCALE = 0.2;
   const MAX_TOUCH_SCALE = 16;
-  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
   function applyCanvasTransform() {
     if (!outputCanvas) return;
