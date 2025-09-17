@@ -74,6 +74,8 @@
   let canvasBgStyle = 'checker'; // Current background style
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
+  const toolSettings = document.getElementById('toolSettings');
+  const toolOptionPanels = Array.from(document.querySelectorAll('.tool-option[data-tool-target]'));
   const LAYER_THUMB_SIZE = 40;
   const LAYER_VISIBLE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s4.2-6.5 9.5-6.5 9.5 6.5 9.5 6.5-4.2 6.5-9.5 6.5S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
   const LAYER_HIDDEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5.7C3.1 7.4 2 9.2 2 9.2s4.2 6.5 9.5 6.5c1.4 0 2.8-.3 4-.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 7.5c2.5 0 4.8 1.5 6.5 3 1 .9 1.8 1.9 2.5 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -111,6 +113,19 @@
     mobileColorBtn.style.background = colorInput.value;
     const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
     mobileColorBtn.style.backgroundImage = (a < 252) ? 'repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 6px)' : 'none';
+  }
+
+  function updateToolOptions() {
+    if (!toolSettings || toolOptionPanels.length === 0) return;
+    const tool = toolSelect?.value || '';
+    let visibleCount = 0;
+    toolOptionPanels.forEach((panel) => {
+      const targets = panel.dataset.toolTarget ? panel.dataset.toolTarget.split(',').map(s => s.trim()) : [];
+      const show = targets.length === 0 || targets.includes(tool);
+      panel.classList.toggle('is-hidden', !show);
+      if (show) visibleCount++;
+    });
+    toolSettings.classList.toggle('is-hidden', visibleCount === 0);
   }
 
   const previewCanvas = document.getElementById('previewCanvas');
@@ -1489,6 +1504,7 @@
     toolSelect.addEventListener('change', () => {
       syncToolButtons();
       updateStatus();
+      updateToolOptions();
       // cursor
       if (toolSelect.value === 'move') {
         outputCanvas.style.cursor = 'move';
@@ -1500,6 +1516,7 @@
     });
     // initial state
     syncToolButtons();
+    updateToolOptions();
   }
 
   // Status bar

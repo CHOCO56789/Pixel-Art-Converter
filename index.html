@@ -29,6 +29,24 @@
 
       <div class="main">
         <aside class="sidebar">
+          <div id="toolSettings" class="tool-settings paint-only">
+            <div class="tool-settings-title">ツール設定</div>
+            <div class="tool-option" data-tool-target="pen,line,rect,fill">
+              <div class="tool-title">カラー</div>
+              <input type="color" id="color" value="#ff4d4d" />
+              <label class="mini">不透明度 <input type="range" id="alpha" min="0" max="255" value="255"></label>
+            </div>
+            <div class="tool-option" data-tool-target="pen">
+              <div class="tool-title">ブラシ</div>
+              <label class="mini">形状
+                <select id="brushShape">
+                  <option value="square" selected>四角</option>
+                  <option value="circle">丸</option>
+                </select>
+              </label>
+              <label class="mini">サイズ <input type="number" id="brushSize" min="1" max="16" value="1" class="num"></label>
+            </div>
+          </div>
           <div class="tool-group paint-only">
             <div class="tool-title">ツール</div>
             <button class="tool-btn" data-tool="pen" type="button" title="ペン">
@@ -40,15 +58,18 @@
             </button>
             <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.4 14.6l6.6-6.6a1.9 1.9 0 012.7 0l2.3 2.3a1.9 1.9 0 010 2.7l-6.6 6.6a1.9 1.9 0 01-1.3.6H7a1.9 1.9 0 01-1.4-.6l-1.6-1.6a1.9 1.9 0 010-2.7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M4.7 13.9l5.9 5.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M10.8 20H16.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               </svg>
               <span class="visually-hidden">消しゴム</span>
             </button>
             <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.6 16l6.9-6.9a1.3 1.3 0 011.8 0l1.4 1.4a1.3 1.3 0 010 1.8l-6.9 6.9a1.8 1.8 0 01-2.5 0l-.7-.7a1.8 1.8 0 010-2.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M7.4 13.8l2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.5 7.1l-2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M14.9 5.1l1.8-1.8a1.8 1.8 0 012.6 0l.4.4a1.8 1.8 0 010 2.6L17.9 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               <span class="visually-hidden">スポイト</span>
             </button>
@@ -66,9 +87,10 @@
             </button>
             <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+                <path d="M6.8 11.4l5.4-5.4a1.6 1.6 0 012.2 0l3.6 3.6a1.6 1.6 0 010 2.2l-5.4 5.4a1.8 1.8 0 01-2.4 0l-3.6-3.6a1.6 1.6 0 010-2.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M5.6 11.8h9.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M9.2 9.6l6.2 6.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M18.3 15.9Q19.5 17.5 20.7 15.9L19.5 13.7Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               <span class="visually-hidden">塗りつぶし</span>
             </button>
@@ -106,31 +128,15 @@
             </button>
           </div>
 
-          <div class="tool-group paint-only">
-            <div class="tool-title">カラー</div>
-            <input type="color" id="color" value="#ff4d4d" />
-            <label class="mini">不透明度 <input type="range" id="alpha" min="0" max="255" value="255"></label>
-          </div>
-
-          <div class="tool-group paint-only">
-            <div class="tool-title">ブラシ</div>
-            <label class="mini">形状
-              <select id="brushShape">
-                <option value="square" selected>四角</option>
-                <option value="circle">丸</option>
-              </select>
-            </label>
-            <label class="mini">サイズ <input type="number" id="brushSize" min="1" max="16" value="1" class="num"></label>
-            <select id="tool" class="visually-hidden">
-              <option value="pen" selected>ペン</option>
-              <option value="eraser">消しゴム</option>
-              <option value="picker">スポイト</option>
-              <option value="line">直線</option>
-              <option value="rect">矩形</option>
-              <option value="fill">塗りつぶし</option>
-              <option value="move">移動</option>
-            </select>
-          </div>
+          <select id="tool" class="visually-hidden">
+            <option value="pen" selected>ペン</option>
+            <option value="eraser">消しゴム</option>
+            <option value="picker">スポイト</option>
+            <option value="line">直線</option>
+            <option value="rect">矩形</option>
+            <option value="fill">塗りつぶし</option>
+            <option value="move">移動</option>
+          </select>
         </aside>
 
         <section class="workspace">
@@ -269,21 +275,25 @@
                   </button>
                   <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M5.4 14.6l6.6-6.6a1.9 1.9 0 012.7 0l2.3 2.3a1.9 1.9 0 010 2.7l-6.6 6.6a1.9 1.9 0 01-1.3.6H7a1.9 1.9 0 01-1.4-.6l-1.6-1.6a1.9 1.9 0 010-2.7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M4.7 13.9l5.9 5.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M10.8 20H16.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                     </svg>
                   </button>
                   <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                      <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+                      <path d="M6.8 11.4l5.4-5.4a1.6 1.6 0 012.2 0l3.6 3.6a1.6 1.6 0 010 2.2l-5.4 5.4a1.8 1.8 0 01-2.4 0l-3.6-3.6a1.6 1.6 0 010-2.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M5.6 11.8h9.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M9.2 9.6l6.2 6.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M18.3 15.9Q19.5 17.5 20.7 15.9L19.5 13.7Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </button>
                   <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M5.6 16l6.9-6.9a1.3 1.3 0 011.8 0l1.4 1.4a1.3 1.3 0 010 1.8l-6.9 6.9a1.8 1.8 0 01-2.5 0l-.7-.7a1.8 1.8 0 010-2.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M7.4 13.8l2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M14.5 7.1l-2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M14.9 5.1l1.8-1.8a1.8 1.8 0 012.6 0l.4.4a1.8 1.8 0 010 2.6L17.9 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </button>
                   <button class="tool-btn" data-tool="line" type="button" title="直線">
@@ -365,21 +375,25 @@
         </button>
         <button class="tool-btn" data-tool="eraser" type="button" title="消しゴム">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 15l8.5-8.5a2 2 0 012.8 0L20 11.2a2 2 0 010 2.8L14.8 19a2 2 0 01-1.4.6H8.5a2 2 0 01-1.4-.6L4 17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5.4 14.6l6.6-6.6a1.9 1.9 0 012.7 0l2.3 2.3a1.9 1.9 0 010 2.7l-6.6 6.6a1.9 1.9 0 01-1.3.6H7a1.9 1.9 0 01-1.4-.6l-1.6-1.6a1.9 1.9 0 010-2.7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M4.7 13.9l5.9 5.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M10.8 20H16.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
           </svg>
         </button>
         <button class="tool-btn" data-tool="fill" type="button" title="塗りつぶし">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 12l6-6 7.5 7.5a2.1 2.1 0 01-1.5 3.6H7.6a2.1 2.1 0 01-2.1-2.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M17.5 7.5l2-2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-            <path d="M19 15.5c0 .8.6 2 1.5 2s1.5-1.2 1.5-2-.6-1.5-1.5-1.5S19 14.7 19 15.5z" fill="none" stroke="currentColor" stroke-width="1.4" />
+            <path d="M6.8 11.4l5.4-5.4a1.6 1.6 0 012.2 0l3.6 3.6a1.6 1.6 0 010 2.2l-5.4 5.4a1.8 1.8 0 01-2.4 0l-3.6-3.6a1.6 1.6 0 010-2.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5.6 11.8h9.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9.2 9.6l6.2 6.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M18.3 15.9Q19.5 17.5 20.7 15.9L19.5 13.7Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
         <button class="tool-btn" data-tool="picker" type="button" title="スポイト">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M13.5 5.5l-1 1 5 5 1-1a3 3 0 000-4.2l-.8-.8a3 3 0 00-4.2 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M4.5 19.5l6-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M7.5 16.5l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M5.6 16l6.9-6.9a1.3 1.3 0 011.8 0l1.4 1.4a1.3 1.3 0 010 1.8l-6.9 6.9a1.8 1.8 0 01-2.5 0l-.7-.7a1.8 1.8 0 010-2.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M7.4 13.8l2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.5 7.1l-2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.9 5.1l1.8-1.8a1.8 1.8 0 012.6 0l.4.4a1.8 1.8 0 010 2.6L17.9 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
         <div class="divider"></div>
