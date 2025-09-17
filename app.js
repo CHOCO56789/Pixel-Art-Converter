@@ -71,11 +71,10 @@
   // Background selector elements
   const previewSurface = document.getElementById('previewSurface');
   const outputSurface = document.getElementById('outputSurface');
-  const bgColorPicker = document.getElementById('bgColorPicker');
   let canvasBgStyle = 'checker'; // Current background style
-  let canvasBgColor = null; // Custom background color
   const statusText = document.getElementById('statusText');
   const toolButtons = Array.from(document.querySelectorAll('.tool-btn[data-tool]'));
+  const LAYER_THUMB_SIZE = 40;
   const LAYER_VISIBLE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s4.2-6.5 9.5-6.5 9.5 6.5 9.5 6.5-4.2 6.5-9.5 6.5S2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
   const LAYER_HIDDEN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 5.7C3.1 7.4 2 9.2 2 9.2s4.2 6.5 9.5 6.5c1.4 0 2.8-.3 4-.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.5 7.5c2.5 0 4.8 1.5 6.5 3 1 .9 1.8 1.9 2.5 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -281,7 +280,11 @@
     colorHistory.forEach(hex => {
       const d = document.createElement('div');
       d.className = 'swatch'; d.title = hex; d.style.background = hex;
-      d.addEventListener('click', () => { colorInput.value = hex; });
+      d.addEventListener('click', () => {
+        if (!colorInput) return;
+        colorInput.value = hex;
+        colorInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
       colorHistoryEl.appendChild(d);
     });
     updateCurrentColorIndicator();
@@ -351,8 +354,12 @@
     const surface = outputSurface || outputCanvas.parentElement;
     if (!surface) return;
     const rect = surface.getBoundingClientRect();
-    const availW = Math.max(1, Math.floor(rect.width - 16));
-    const availH = Math.max(1, Math.floor(rect.height - 16));
+    let availW = Math.max(1, Math.floor(rect.width - 16));
+    let availH = Math.max(1, Math.floor(rect.height - 16));
+    const stackView = canvasArea && canvasArea.dataset.view === 'stack' && appMode === 'normalize';
+    if (stackView) {
+      availH = Number.POSITIVE_INFINITY;
+    }
 
     // Check if mobile (768px or less)
     const isMobile = window.innerWidth <= 768;
@@ -373,8 +380,12 @@
     const surface = previewSurface || previewCanvas.parentElement;
     if (!surface) return;
     const rect = surface.getBoundingClientRect();
-    const availW = Math.max(1, rect.width - 16);
-    const availH = Math.max(1, rect.height - 16);
+    let availW = Math.max(1, rect.width - 16);
+    let availH = Math.max(1, rect.height - 16);
+    const stackView = canvasArea && canvasArea.dataset.view === 'stack' && appMode === 'normalize';
+    if (stackView) {
+      availH = Number.POSITIVE_INFINITY;
+    }
     const vw = Math.max(1, target.vw || previewCanvas.width || 1);
     const vh = Math.max(1, target.vh || previewCanvas.height || 1);
     const ratio = vw / vh;
@@ -416,8 +427,13 @@
         const el = document.createElement('div');
         el.className = 'layer-item';
         if (it.type === 'layer') { el.setAttribute('draggable', 'true'); el.dataset.index = String(it.index); }
-        const thumb = document.createElement('div'); thumb.className = 'layer-thumb';
-        const t = document.createElement('canvas'); t.width = 48; t.height = 48; const tctx = t.getContext('2d'); tctx.imageSmoothingEnabled = false;
+        const thumb = document.createElement('div');
+        thumb.className = 'layer-thumb';
+        const t = document.createElement('canvas');
+        t.width = LAYER_THUMB_SIZE;
+        t.height = LAYER_THUMB_SIZE;
+        const tctx = t.getContext('2d');
+        tctx.imageSmoothingEnabled = false;
         const meta = document.createElement('div'); meta.className = 'layer-meta';
         const nameEl = document.createElement('div'); nameEl.className = 'layer-name';
         const tagsEl = document.createElement('div'); tagsEl.className = 'layer-tags';
@@ -429,7 +445,7 @@
           nameEl.textContent = 'ベース'; tagsEl.textContent = '変換結果';
           if (baseVisible === false) el.classList.add('is-hidden');
           if (editingBase) el.classList.add('selected');
-          if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, 48, 48);
+          if (baseCanvas.width && baseCanvas.height) tctx.drawImage(baseCanvas, 0, 0, LAYER_THUMB_SIZE, LAYER_THUMB_SIZE);
           updateLayerEyeButton(eye, baseVisible !== false);
           eye.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -443,7 +459,7 @@
           nameEl.textContent = ly.name || `Layer ${it.index+1}`; tagsEl.textContent = '編集レイヤー';
           if (ly.visible === false) el.classList.add('is-hidden');
           if (!editingBase && currentLayerIndex === it.index) el.classList.add('selected');
-          if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, 48, 48);
+          if (ly.canvas.width && ly.canvas.height) tctx.drawImage(ly.canvas, 0, 0, LAYER_THUMB_SIZE, LAYER_THUMB_SIZE);
           updateLayerEyeButton(eye, ly.visible !== false);
           eye.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -559,12 +575,6 @@
         break;
       case 'black':
         ctx.fillStyle = '#000000';
-        break;
-      case 'gray':
-        ctx.fillStyle = '#374151';
-        break;
-      case 'custom':
-        ctx.fillStyle = canvasBgColor || '#ffffff';
         break;
       default:
         ctx.restore();
@@ -1829,16 +1839,14 @@
   });
 
   // Background selector functionality
-  function updateBackgroundStyle(bgType, customColor = null) {
+  function updateBackgroundStyle(bgType) {
     canvasBgStyle = bgType;
-    canvasBgColor = customColor;
 
     // Update both preview and output surfaces
     [previewSurface, outputSurface].forEach(surface => {
       if (!surface) return;
 
       const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
-      const colorPicker = bgColorPicker;
 
       // Update active state for buttons
       bgButtons.forEach(btn => {
@@ -1856,24 +1864,10 @@
         case 'black':
           surface.classList.add('bg-black');
           break;
-        case 'lightgray':
-          surface.classList.add('bg-lightgray');
-          break;
-        case 'gray':
-          surface.classList.add('bg-gray');
-          break;
-        case 'custom':
-          surface.style.backgroundColor = customColor;
-          break;
         case 'checker':
         default:
           surface.classList.add('checker');
           break;
-      }
-
-      // Update color picker if custom color
-      if (bgType === 'custom' && customColor && colorPicker) {
-        colorPicker.value = customColor;
       }
     });
 
@@ -1888,7 +1882,7 @@
     }
   }
 
-  function setupBackgroundSelector(surface, colorPicker) {
+  function setupBackgroundSelector(surface) {
     if (!surface) return;
 
     const bgButtons = surface.parentElement.querySelectorAll('.bg-btn');
@@ -1898,13 +1892,6 @@
         updateBackgroundStyle(btn.dataset.bg);
       });
     });
-
-    // Custom color picker
-    if (colorPicker) {
-      colorPicker.addEventListener('change', () => {
-        updateBackgroundStyle('custom', colorPicker.value);
-      });
-    }
   }
 
   // Set default background after setup
@@ -1913,7 +1900,7 @@
   }
 
   // Initialize background selectors
-  setupBackgroundSelector(outputSurface, bgColorPicker);
+  setupBackgroundSelector(outputSurface);
   initializeBackground();
 
   // Layers popover (mobile-friendly)
