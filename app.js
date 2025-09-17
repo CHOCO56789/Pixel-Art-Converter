@@ -1144,6 +1144,8 @@
       console.log('Open file button clicked');
       if (fileInput) {
         console.log('File input found, triggering click');
+        // Reset value so selecting the same file triggers a change event again
+        fileInput.value = '';
         fileInput.click();
       } else {
         console.error('File input not found');
