@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const fileInput = document.getElementById('fileInput');
   const gridWInput = document.getElementById('gridW');
   const gridHInput = document.getElementById('gridH');
@@ -133,6 +133,236 @@
   // Paint history
   // Per-layer undo stacks will be stored on each layer object
   const MAX_HISTORY = 30;
+  const PROJECT_STORAGE_KEY = 'pixelart-project';
+  let isRestoringProject = false;
+  let saveScheduled = false;
+
+  function serializeProject() {
+    try {
+      const payload = {
+        version: 1,
+        appMode,
+        lastGridW,
+        lastGridH,
+        canvasBgStyle,
+        baseVisible,
+        editingBase,
+        currentLayerIndex,
+        colorHistory: Array.isArray(colorHistory) ? [...colorHistory] : [],
+        base: null,
+        layers: layers.map(ly => {
+          let image = null;
+          try {
+            if (ly.canvas && ly.canvas.width && ly.canvas.height) {
+              image = ly.canvas.toDataURL();
+            }
+          } catch (err) {
+            console.warn('Failed to serialize layer canvas', err);
+          }
+          return {
+            name: ly.name || '',
+            visible: ly.visible === false ? false : true,
+            image,
+          };
+        })
+      };
+      try {
+        if (baseCanvas && baseCanvas.width && baseCanvas.height) {
+          payload.base = { image: baseCanvas.toDataURL() };
+        }
+      } catch (err) {
+        console.warn('Failed to serialize base canvas', err);
+      }
+      return JSON.stringify(payload);
+    } catch (err) {
+      console.warn('Failed to serialize project', err);
+      return null;
+    }
+  }
+
+  function saveProjectState() {
+    if (isRestoringProject) return;
+    if (saveScheduled) return;
+    saveScheduled = true;
+    const runner = () => {
+      saveScheduled = false;
+      if (isRestoringProject) return;
+      if (typeof localStorage === 'undefined') return;
+      const json = serializeProject();
+      if (!json) return;
+      try {
+        localStorage.setItem(PROJECT_STORAGE_KEY, json);
+      } catch (err) {
+        console.warn('Failed to save project to localStorage', err);
+      }
+    };
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(runner);
+    } else {
+      setTimeout(runner, 0);
+    }
+  }
+
+  async function deserializeProject(json) {
+    let data;
+    try {
+      data = JSON.parse(json);
+    } catch (err) {
+      throw new Error('Failed to parse project data');
+    }
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid project payload');
+    }
+
+    const loadImage = (src) => new Promise((resolve, reject) => {
+      if (!src) { resolve(null); return; }
+      const im = new Image();
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('Failed to load project image'));
+      im.src = src;
+    });
+
+    const baseEntry = data.base || null;
+    const baseImage = await loadImage(baseEntry?.image || null);
+
+    const layerEntries = Array.isArray(data.layers) ? data.layers : [];
+    const layerImages = [];
+    for (const entry of layerEntries) {
+      const image = await loadImage(entry?.image || null);
+      layerImages.push({ entry, image });
+    }
+
+    let width = baseImage ? baseImage.naturalWidth : 0;
+    let height = baseImage ? baseImage.naturalHeight : 0;
+    if ((!width || !height) && layerImages.length) {
+      for (const { image } of layerImages) {
+        if (image) {
+          width = image.naturalWidth;
+          height = image.naturalHeight;
+          break;
+        }
+      }
+    }
+    if (!width || !height) {
+      width = Math.max(1, parseInt(data.lastGridW || '0', 10)) || 0;
+      height = Math.max(1, parseInt(data.lastGridH || '0', 10)) || 0;
+    }
+    if (!width || !height) {
+      throw new Error('Project canvas size is invalid');
+    }
+
+    baseCanvas.width = width;
+    baseCanvas.height = height;
+    baseCtx.clearRect(0, 0, width, height);
+    if (baseImage) {
+      baseCtx.drawImage(baseImage, 0, 0, width, height);
+    }
+
+    layers = layerImages.map(({ entry, image }, index) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (image) ctx.drawImage(image, 0, 0, width, height);
+      return {
+        name: entry?.name || `レイヤー ${index + 1}`,
+        visible: entry?.visible === false ? false : true,
+        canvas,
+        ctx,
+        undo: [],
+        redo: []
+      };
+    });
+
+    if (!layers.length) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      layers.push({ name: 'レイヤー 1', canvas, ctx, undo: [], redo: [], visible: true });
+    }
+
+    const idx = parseInt(data.currentLayerIndex ?? 0, 10);
+    currentLayerIndex = Number.isFinite(idx) ? Math.min(Math.max(idx, 0), layers.length - 1) : 0;
+    editingBase = data.editingBase === true && baseCanvas.width > 0;
+
+    lastGridW = width;
+    lastGridH = height;
+    if (gridWInput) gridWInput.value = String(width);
+    if (gridHInput) gridHInput.value = String(height);
+
+    baseVisible = data.baseVisible === false ? false : true;
+
+    if (Array.isArray(data.colorHistory)) {
+      colorHistory = data.colorHistory.filter(hex => /^#([0-9a-f]{6})$/i.test(hex));
+    } else {
+      colorHistory = [];
+    }
+    renderColorHistory();
+
+    const bg = data.canvasBgStyle || canvasBgStyle || 'checker';
+    updateBackgroundStyle(bg);
+
+    if (layerSelect) {
+      layerSelect.innerHTML = '';
+      layers.forEach((ly, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = ly.name || `Layer ${i+1}`;
+        if (!editingBase && i === currentLayerIndex) opt.selected = true;
+        layerSelect.appendChild(opt);
+      });
+      if (!editingBase) {
+        layerSelect.value = String(currentLayerIndex);
+      }
+    }
+
+    if (editingBase) {
+      selectBaseForEditing();
+    } else {
+      selectLayerForEditing(currentLayerIndex);
+    }
+
+    baseUndo = [];
+    baseRedo = [];
+    layers.forEach(ly => { ly.undo = []; ly.redo = []; });
+
+    hasPaint = Boolean((baseImage && baseEntry?.image) || layerImages.some(({ entry }) => entry?.image));
+
+    appMode = 'edit';
+
+    renderLayerList();
+    compositeOutput();
+    updateStatus();
+
+    return true;
+  }
+
+  async function restoreProjectFromStorage() {
+    if (typeof localStorage === 'undefined') return false;
+    const stored = localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (!stored) return false;
+    try {
+      isRestoringProject = true;
+      await deserializeProject(stored);
+      return true;
+    } catch (err) {
+      console.warn('Failed to restore project', err);
+      try {
+        localStorage.removeItem(PROJECT_STORAGE_KEY);
+      } catch (removeErr) {
+        console.warn('Failed to clear broken project data', removeErr);
+      }
+      if (typeof alert === 'function') {
+        alert('保存データの読み込みに失敗しました。新規プロジェクトを開始します。');
+      }
+      return false;
+    } finally {
+      isRestoringProject = false;
+    }
+  }
+
+  await restoreProjectFromStorage();
 
   function pushPaintHistory() {
     if (!paintCanvas || !paintCanvas.width || !paintCanvas.height) return;
@@ -159,6 +389,7 @@
       baseRedo.push(cur);
       baseCtx.putImageData(prev, 0, 0);
       compositeOutput();
+      saveProjectState();
       return;
     }
     const layer = layers[currentLayerIndex];
@@ -169,6 +400,7 @@
     layer.redo.push(cur);
     paintCtx.putImageData(prev, 0, 0);
     compositeOutput();
+    saveProjectState();
   }
 
   function redoPaint() {
@@ -179,6 +411,7 @@
       baseUndo.push(cur);
       baseCtx.putImageData(nxt, 0, 0);
       compositeOutput();
+      saveProjectState();
       return;
     }
     const layer = layers[currentLayerIndex];
@@ -189,6 +422,7 @@
     layer.undo.push(cur);
     paintCtx.putImageData(nxt, 0, 0);
     compositeOutput();
+    saveProjectState();
   }
 
   function clearPaint() {
@@ -197,6 +431,7 @@
     paintCtx.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
     compositeOutput();
     hasPaint = false;
+    saveProjectState();
   }
 
   function hexToRgb(hex) {
@@ -292,7 +527,10 @@
   }
 
   function renderColorHistory() {
-    if (!colorHistoryEl) return;
+    if (!colorHistoryEl) {
+      saveProjectState();
+      return;
+    }
     colorHistoryEl.innerHTML = '';
     colorHistory.forEach(hex => {
       const d = document.createElement('div');
@@ -305,6 +543,7 @@
       colorHistoryEl.appendChild(d);
     });
     updateCurrentColorIndicator();
+    saveProjectState();
   }
 
   function updateCurrentColorIndicator() {
@@ -361,6 +600,7 @@
 
     renderLayerList();
     fitOutputCanvas();
+    saveProjectState();
   }
 
   function fitOutputCanvas() {
@@ -1281,6 +1521,7 @@
         layerSelect.appendChild(opt); layerSelect.value = String(currentLayerIndex);
       }
       compositeOutput();
+      saveProjectState();
     });
   }
   // Mobile bottom bar handlers
@@ -1340,6 +1581,7 @@
     layers.push({ name, canvas: c, ctx, undo: [], redo: [], visible: true });
     selectLayerForEditing(layers.length - 1);
     compositeOutput();
+    saveProjectState();
   });
   if (removeLayerBtnMobile2) removeLayerBtnMobile2.addEventListener('click', () => {
     if (editingBase) { alert('ベースは削除できません'); return; }
@@ -1347,6 +1589,7 @@
     layers.splice(currentLayerIndex, 1);
     selectLayerForEditing(Math.max(0, currentLayerIndex - 1));
     compositeOutput();
+    saveProjectState();
   });
   if (removeLayerBtn) {
     removeLayerBtn.addEventListener('click', () => {
@@ -1362,6 +1605,7 @@
         });
       }
       compositeOutput();
+      saveProjectState();
     });
   }
 
@@ -1407,6 +1651,7 @@
     if (mode === 'normalize') {
       render();
     }
+    saveProjectState();
   }
   if (finalizeBtn) {
     finalizeBtn.addEventListener('click', () => {
@@ -1912,6 +2157,7 @@
         compositeOutput();
       }
     }
+    saveProjectState();
   }
 
   function setupBackgroundSelector(surface) {
@@ -1928,7 +2174,7 @@
 
   // Set default background after setup
   function initializeBackground() {
-    updateBackgroundStyle('checker');
+    updateBackgroundStyle(canvasBgStyle || 'checker');
   }
 
   // Initialize background selectors
@@ -1972,6 +2218,7 @@
       layers.push({ name, canvas: c, ctx, undo: [], redo: [], visible: true });
       selectLayerForEditing(layers.length - 1);
       compositeOutput();
+      saveProjectState();
     });
   }
   if (removeLayerBtnMobile) {
@@ -1981,6 +2228,7 @@
       layers.splice(currentLayerIndex, 1);
       selectLayerForEditing(Math.max(0, currentLayerIndex - 1));
       compositeOutput();
+      saveProjectState();
     });
   }
 
