@@ -301,6 +301,14 @@
     const gh = baseCanvas.height;
     outputCanvas.width = gw;
     outputCanvas.height = gh;
+    const sizeChanged = (lastOutputSize.w !== gw) || (lastOutputSize.h !== gh);
+    if (sizeChanged) {
+      viewTransform.scale = 1;
+      viewTransform.tx = 0;
+      viewTransform.ty = 0;
+      applyCanvasTransform();
+    }
+    lastOutputSize = { w: gw, h: gh };
     outputCtx.clearRect(0, 0, gw, gh);
 
     if (baseVisible) outputCtx.drawImage(baseCanvas, 0, 0);
@@ -337,6 +345,7 @@
     const cssH = gh * scale;
     outputCanvas.style.width = cssW + 'px';
     outputCanvas.style.height = cssH + 'px';
+    applyCanvasTransform();
   }
 
   function selectBaseForEditing() {
@@ -1200,17 +1209,118 @@
   let longPressTimer = null;
   let longPressActive = false;
   const LONG_PRESS_MS = 400;
+  const gesturePointers = new Map();
+  let gestureStart = null;
+  let touchGestureActive = false;
+  let activePaintPointerId = null;
+  let activeMovePointerId = null;
+  const viewTransform = { scale: 1, tx: 0, ty: 0 };
+  let lastOutputSize = { w: 0, h: 0 };
+  const MIN_TOUCH_SCALE = 0.2;
+  const MAX_TOUCH_SCALE = 16;
+  const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+  function applyCanvasTransform() {
+    if (!outputCanvas) return;
+    outputCanvas.style.transform = `translate(${viewTransform.tx}px, ${viewTransform.ty}px) scale(${viewTransform.scale})`;
+  }
+  applyCanvasTransform();
   function ocRect(){ return outputCanvas.getBoundingClientRect(); }
   function ocCoords(e){ const r=ocRect(); const x=e.clientX-r.left, y=e.clientY-r.top; return { gx: Math.floor(x*(outputCanvas.width/r.width)), gy: Math.floor(y*(outputCanvas.height/r.height)) }; }
+  function getGestureMetrics() {
+    if (!outputSurface || gesturePointers.size < 2) return null;
+    const rect = outputSurface.getBoundingClientRect();
+    const pts = Array.from(gesturePointers.values()).map(p => ({ x: p.x - rect.left, y: p.y - rect.top }));
+    const cx = (pts[0].x + pts[1].x) / 2;
+    const cy = (pts[0].y + pts[1].y) / 2;
+    const dx = pts[1].x - pts[0].x;
+    const dy = pts[1].y - pts[0].y;
+    const dist = Math.hypot(dx, dy);
+    return { cx, cy, dist };
+  }
+
+  function beginGesture() {
+    const metrics = getGestureMetrics();
+    if (!metrics) return;
+    gestureStart = { ...metrics, tx: viewTransform.tx, ty: viewTransform.ty, scale: viewTransform.scale };
+    touchGestureActive = true;
+  }
+
+  function updateGesture() {
+    if (!gestureStart) return;
+    const metrics = getGestureMetrics();
+    if (!metrics || metrics.dist <= 0) return;
+    const nextScale = clamp(gestureStart.scale * (metrics.dist / gestureStart.dist), MIN_TOUCH_SCALE, MAX_TOUCH_SCALE);
+    const scaleRatio = nextScale / gestureStart.scale;
+    const tx = metrics.cx - scaleRatio * (gestureStart.cx - gestureStart.tx);
+    const ty = metrics.cy - scaleRatio * (gestureStart.cy - gestureStart.ty);
+    viewTransform.scale = nextScale;
+    viewTransform.tx = tx;
+    viewTransform.ty = ty;
+    applyCanvasTransform();
+  }
+
+  function resetGestureIfNeeded(pointerId) {
+    gesturePointers.delete(pointerId);
+    if (gesturePointers.size >= 2) {
+      beginGesture();
+    } else {
+      gestureStart = null;
+      touchGestureActive = false;
+    }
+  }
+
+  function cancelPaintingForGesture() {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    longPressActive = false;
+    if (moving) {
+      const targetCtx = editingBase ? baseCtx : paintCtx;
+      const targetCanvas = editingBase ? baseCanvas : paintCanvas;
+      if (moveSnapshot && targetCtx && targetCanvas) {
+        targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+        targetCtx.putImageData(moveSnapshot, 0, 0);
+        compositeOutput();
+      }
+      moving = false;
+      moveSnapshot = null;
+      moveStart = null;
+      activeMovePointerId = null;
+    }
+    if (painting) {
+      if (startPoint) {
+        if (previewActive) { compositeOutput(); previewActive = false; }
+        startPoint = null;
+      } else if (activePaintPointerId != null) {
+        undoPaint();
+      }
+      painting = false;
+      activePaintPointerId = null;
+    }
+  }
   function ocDown(e){
     e.preventDefault();
     if (appMode !== 'edit') return; // 編集モードのみ描画可能
     if (!paintCanvas || !paintCanvas.width) return;
+    if (outputCanvas.setPointerCapture) {
+      try { outputCanvas.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    if (e.pointerType === 'touch') {
+      gesturePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (gesturePointers.size >= 2) {
+        cancelPaintingForGesture();
+        beginGesture();
+        return;
+      }
+    }
+    if (touchGestureActive) return;
+
     const { gx, gy } = ocCoords(e);
     const tool = toolSelect.value;
     if (tool === 'move') {
       pushPaintHistory();
       moving = true;
+      activeMovePointerId = e.pointerId;
       moveStart = { x: gx, y: gy };
       // snapshot current target layer/base
       if (editingBase) {
@@ -1250,12 +1360,14 @@
     if (tool === 'line' || tool === 'rect') {
       startPoint = { x: gx, y: gy };
       painting = true;
+      activePaintPointerId = e.pointerId;
       previewActive = true;
       return;
     }
 
     pushPaintHistory();
     painting = true;
+    activePaintPointerId = e.pointerId;
     const rgba = (tool === 'eraser') ? [0,0,0,0] : getCurrentColor();
     if (tool !== 'eraser') addColorToHistory(colorInput.value);
     drawBrush(gx, gy, rgba);
@@ -1263,9 +1375,20 @@
   }
   function ocMove(e){
     if (appMode !== 'edit') return;
+
+    if (e.pointerType === 'touch' && gesturePointers.has(e.pointerId)) {
+      gesturePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (gesturePointers.size >= 2) {
+        e.preventDefault();
+        updateGesture();
+        return;
+      }
+    }
+    if (touchGestureActive) return;
+
     const tool = toolSelect.value;
     if (tool === 'move') {
-      if (!moving || !moveSnapshot) return;
+      if (!moving || !moveSnapshot || e.pointerId !== activeMovePointerId) return;
       e.preventDefault();
       const { gx, gy } = ocCoords(e);
       const dx = gx - moveStart.x;
@@ -1277,7 +1400,7 @@
       compositeOutput();
       return;
     }
-    if (!painting) return;
+    if (!painting || e.pointerId !== activePaintPointerId) return;
     const { gx, gy } = ocCoords(e);
     e.preventDefault();
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
@@ -1291,29 +1414,63 @@
   }
   function ocUp(e){
     if (appMode !== 'edit') return;
+    if (e.pointerType === 'touch' && gesturePointers.has(e.pointerId)) {
+      resetGestureIfNeeded(e.pointerId);
+    }
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (moving) {
-      moving = false; moveSnapshot = null; moveStart = null;
+
+    const tool = toolSelect.value;
+
+    if (moving && e.pointerId === activeMovePointerId) {
+      moving = false;
+      moveSnapshot = null;
+      moveStart = null;
+      activeMovePointerId = null;
       return;
     }
-    if (!startPoint) return;
-    const { gx, gy } = ocCoords(e);
-    const tool = toolSelect.value;
-    if (previewActive) { compositeOutput(); previewActive = false; }
-    if (tool === 'line') {
-      pushPaintHistory();
-      addColorToHistory(colorInput.value);
-      drawLine(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
-      compositeOutput();
-    } else if (tool === 'rect') {
-      pushPaintHistory();
-      addColorToHistory(colorInput.value);
-      drawRect(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
-      compositeOutput();
+    if (moving && e.pointerId !== activeMovePointerId) return;
+
+    if (e.pointerId !== activePaintPointerId) return;
+
+    if (tool === 'line' || tool === 'rect') {
+      if (previewActive) { compositeOutput(); previewActive = false; }
+      if (startPoint) {
+        const { gx, gy } = ocCoords(e);
+        pushPaintHistory();
+        addColorToHistory(colorInput.value);
+        if (tool === 'line') {
+          drawLine(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
+        } else {
+          drawRect(startPoint.x, startPoint.y, gx, gy, getCurrentColor());
+        }
+        compositeOutput();
+      }
     }
+    painting = false;
     startPoint = null;
+    activePaintPointerId = null;
+    longPressActive = false;
   }
   if (window.PointerEvent){ outputCanvas.addEventListener('pointerdown', ocDown); window.addEventListener('pointermove', ocMove); window.addEventListener('pointerup', ocUp); window.addEventListener('pointercancel', ocUp);} else { outputCanvas.addEventListener('mousedown', ocDown); window.addEventListener('mousemove', ocMove); window.addEventListener('mouseup', ocUp); }
+
+  if (outputSurface) {
+    outputSurface.addEventListener('wheel', (e) => {
+      if (!outputCanvas) return;
+      if (appMode !== 'edit') return;
+      e.preventDefault();
+      const rect = outputSurface.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+      const nextScale = clamp(viewTransform.scale * factor, MIN_TOUCH_SCALE, MAX_TOUCH_SCALE);
+      if (nextScale === viewTransform.scale) return;
+      const ratio = nextScale / viewTransform.scale;
+      viewTransform.tx = cx - ratio * (cx - viewTransform.tx);
+      viewTransform.ty = cy - ratio * (cy - viewTransform.ty);
+      viewTransform.scale = nextScale;
+      applyCanvasTransform();
+    }, { passive: false });
+  }
 
   // Status: cursor coordinate over output canvas
   if (outputCanvas) {
