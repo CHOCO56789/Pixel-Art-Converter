@@ -44,6 +44,7 @@
   let colorHistory = [];
   const COLOR_HISTORY_MAX = 48;
   const openFileBtn = document.getElementById('openFileBtn');
+  const addImageBtn = document.getElementById('addImageBtn');
   const exportToggle = document.getElementById('exportToggle');
   const exportPopover = document.getElementById('exportPopover');
   // Mobile bottom bar controls
@@ -914,17 +915,23 @@
   undoBtn.addEventListener('click', undoPaint);
   redoBtn.addEventListener('click', redoPaint);
   clearPaintBtn.addEventListener('click', clearPaint);
-  if (openFileBtn) {
-    openFileBtn.addEventListener('click', () => {
-      console.log('Open file button clicked');
-      if (fileInput) {
-        console.log('File input found, triggering click');
-        fileInput.click();
-      } else {
-        console.error('File input not found');
-        statusText.textContent = 'エラー: ファイル入力が見つかりません';
-      }
-    });
+  const fileOpenButtons = [openFileBtn, addImageBtn].filter(Boolean);
+  const triggerFileDialog = () => {
+    if (!fileInput) {
+      console.error('File input not found');
+      if (statusText) statusText.textContent = 'エラー: ファイル入力が見つかりません';
+      return;
+    }
+    try {
+      fileInput.value = '';
+      fileInput.click();
+    } catch (err) {
+      console.error('Failed to trigger file dialog', err);
+      if (statusText) statusText.textContent = 'エラー: ファイル選択を開けません';
+    }
+  };
+  if (fileOpenButtons.length) {
+    fileOpenButtons.forEach(btn => btn.addEventListener('click', triggerFileDialog));
   } else {
     console.error('Open file button not found');
   }
