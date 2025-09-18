@@ -52,7 +52,9 @@
   const mobileBrushDec = document.getElementById('mobileBrushDec');
   const mobileBrushInc = document.getElementById('mobileBrushInc');
   const mobileBrushSize = document.getElementById('mobileBrushSize');
+  const mobileBrushGroup = document.getElementById('mobileBrushControls');
   const mobileColorBtn = document.getElementById('mobileColorBtn');
+  const mobileColorGroup = document.getElementById('mobileColorControls');
   const layersToggleMobile = document.getElementById('layersToggleMobile');
   const layersModal = document.getElementById('layersModal');
   const closeLayersModal = document.getElementById('closeLayersModal');
@@ -113,6 +115,29 @@
     mobileColorBtn.style.background = colorInput.value;
     const a = alphaInput ? parseInt(alphaInput.value||'255',10) : 255;
     mobileColorBtn.style.backgroundImage = (a < 252) ? 'repeating-linear-gradient(45deg, rgba(0,0,0,0.35) 0 2px, transparent 2px 6px)' : 'none';
+  }
+
+  function parseToolTargets(panel, fallbackTargets = []) {
+    if (!panel || !panel.dataset) return new Set(fallbackTargets);
+    const value = panel.dataset.toolTarget || '';
+    if (!value) return new Set(fallbackTargets);
+    return new Set(value.split(',').map(s => s.trim()).filter(Boolean));
+  }
+
+  const colorToolTargets = parseToolTargets(colorInput?.closest('.tool-option'), ['pen', 'line', 'rect', 'fill']);
+  const brushToolTargets = parseToolTargets(brushSizeInput?.closest('.tool-option'), ['pen']);
+
+  function toggleHidden(el, hidden) {
+    if (!el) return;
+    el.classList.toggle('hidden', hidden);
+  }
+
+  function updateMobileToolVisibility() {
+    const tool = toolSelect?.value || '';
+    const showBrush = brushToolTargets.size === 0 || brushToolTargets.has(tool);
+    const showColor = colorToolTargets.size === 0 || colorToolTargets.has(tool);
+    toggleHidden(mobileBrushGroup, !showBrush);
+    toggleHidden(mobileColorGroup, !showColor);
   }
 
   function updateToolOptions() {
@@ -1750,6 +1775,7 @@
       syncToolButtons();
       updateStatus();
       updateToolOptions();
+      updateMobileToolVisibility();
       // cursor
       if (toolSelect.value === 'move') {
         outputCanvas.style.cursor = 'move';
@@ -1762,6 +1788,7 @@
     // initial state
     syncToolButtons();
     updateToolOptions();
+    updateMobileToolVisibility();
   }
 
   // Status bar

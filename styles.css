@@ -97,6 +97,7 @@ body:not(.edit-mode) .workspace { grid-template-rows: auto auto auto; }
 .mobile-bottom-bar .tool-btn.active { outline: 2px solid #2563eb; background: #0f1a2e; }
 .mobile-bottom-bar .label { min-width: 28px; text-align: center; color: #94a3b8; font-weight: 600; }
 .mobile-bottom-bar .divider { width: 1px; height: 32px; background: #1f2937; flex: 0 0 auto; }
+.mobile-bottom-bar .mobile-toolbar-group { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
 .mobile-bottom-bar .mobile-color-picker {
   position: relative;
   width: 44px;
@@ -200,17 +201,17 @@ body:not(.edit-mode) .sidebar { display: none; }
 
 /* Layer list */
 .layer-list { display: grid; gap: 6px; }
-.layer-item { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 6px; padding: 6px; border: 1px solid #1f2937; border-radius: 8px; background: #0b1220; cursor: pointer; min-height: 48px; }
+.layer-item { display: grid; grid-template-columns: 40px 1fr repeat(3, auto); align-items: center; gap: 6px; padding: 6px; border: 1px solid #1f2937; border-radius: 8px; background: #0b1220; cursor: pointer; min-height: 48px; }
 .layer-item.selected { outline: 2px solid #2563eb; background: #0f1a2e; }
 .layer-thumb { width: 40px; height: 40px; border-radius: 6px; overflow: hidden; background: #111827; display: grid; place-items: center; }
 .layer-thumb canvas { width: 40px; height: 40px; image-rendering: pixelated; }
 .layer-meta { display: flex; flex-direction: column; gap: 2px; }
 .layer-name { font-size: 12px; color: #e5e7eb; }
 .layer-tags { font-size: 10px; color: #94a3b8; }
-.layer-eye { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; }
+.layer-eye { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; justify-self: center; }
 .layer-eye svg { width: 16px; height: 16px; display: block; }
 .layer-item.is-hidden .layer-eye { color: #f87171; }
-.layer-btn { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; font-size: 0; }
+.layer-btn { background: transparent; border: 1px solid #1f2937; color: #94a3b8; border-radius: 6px; width: 24px; height: 24px; display: grid; place-items: center; cursor: pointer; font-size: 0; justify-self: center; }
 .layer-btn svg { width: 16px; height: 16px; display: block; }
 .edit-mode .normalize-only { display: none !important; }
 .edit-mode #outputWrap { grid-column: 1 / -1; }
@@ -295,7 +296,7 @@ body:not(.edit-mode) .topbar { max-height: 48vh; overflow: auto; }
   flex: 1 1 120px;
 }
 .layer-modal .layer-list.mobile { overflow: auto; padding: 0; background: transparent; }
-.layer-list.mobile .layer-item { grid-template-columns: 40px 1fr auto auto; min-height: 52px; padding: 8px; }
+.layer-list.mobile .layer-item { grid-template-columns: 40px 1fr repeat(3, auto); min-height: 52px; padding: 8px; }
 .layer-list.mobile .layer-name { font-size: 14px; }
 .layer-list.mobile .layer-eye, .layer-list.mobile .layer-btn { width: 32px; height: 32px; }
 .layer-list.mobile .layer-eye svg { width: 18px; height: 18px; }
