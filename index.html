@@ -396,22 +396,26 @@
             <path d="M14.9 5.1l1.8-1.8a1.8 1.8 0 012.6 0l.4.4a1.8 1.8 0 010 2.6L17.9 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
-        <div class="divider"></div>
-        <button id="mobileBrushDec" type="button" title="ブラシ縮小">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-        </button>
-        <span id="mobileBrushSize" class="label">1</span>
-        <button id="mobileBrushInc" type="button" title="ブラシ拡大">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-          </svg>
-        </button>
-        <div class="divider"></div>
-        <div class="mobile-color-picker">
-          <button id="mobileColorBtn" type="button" title="色を選択" aria-label="色を選択" class="color-chip"></button>
-          <input type="color" id="mobileColorInput" aria-label="色を選択" />
+        <div id="mobileBrushControls" class="mobile-toolbar-group">
+          <div class="divider"></div>
+          <button id="mobileBrushDec" type="button" title="ブラシ縮小">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
+          <span id="mobileBrushSize" class="label">1</span>
+          <button id="mobileBrushInc" type="button" title="ブラシ拡大">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div id="mobileColorControls" class="mobile-toolbar-group">
+          <div class="divider"></div>
+          <div class="mobile-color-picker">
+            <button id="mobileColorBtn" type="button" title="色を選択" aria-label="色を選択" class="color-chip"></button>
+            <input type="color" id="mobileColorInput" aria-label="色を選択" />
+          </div>
         </div>
         <button id="layersToggleMobile" class="ghost compact" type="button" title="レイヤー">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
